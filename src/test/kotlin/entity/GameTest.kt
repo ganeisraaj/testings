@@ -17,7 +17,6 @@ class GameTest {
      *
      * Expected behavior:
      * - The total number of rounds is set correctly.
-     * - The number of rounds left is set correctly.
      * - The current round starts at 1.
      * - The current player index is initialized to 0.
      * - The players list contains the provided players.
@@ -26,13 +25,11 @@ class GameTest {
     fun testGameCreation() {
         val game = Game(
             totalRounds = 5,
-            roundsLeft = 5,
             players = mutableListOf(Player("Alice"), Player("Bob"))
         )
 
         assertEquals(5, game.totalRounds)
-        assertEquals(5, game.roundsLeft)
-        assertEquals(1, game.currRound)
+        assertEquals(1, game.currentRound)
         assertEquals(0, game.currentPlayerIndex)
         assertEquals(2, game.players.size)
     }

@@ -14,7 +14,7 @@ import java.util.Stack
  *
  * @property totalRounds The total number of rounds selected for this game.
  * @property roundsLeft The number of rounds remaining until the game ends.
- * @property currRound The current round number (starting at 1).
+ * @property currentRound The current round number (starting at 1).
  * @property currentPlayerIndex The index of the player whose turn it currently is.
  * @property log A chronological list of textual log messages describing game events.
  * @property players The list of participating players (2..4).
@@ -26,8 +26,7 @@ import java.util.Stack
  */
 data class Game(
     var totalRounds: Int = 0,
-    var roundsLeft: Int = 0,
-    var currRound: Int = 1,
+    var currentRound: Int = 1,
     var currentPlayerIndex: Int = 0,
     val log: MutableList<String> = mutableListOf(),
     val players: MutableList<Player> = mutableListOf(),
