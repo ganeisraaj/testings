@@ -3,12 +3,21 @@ package entity
 import kotlin.test.*
 
 /**
- * Test class for [CardValue].
+ * Test class for the [CardValue] enum.
+ *
+ * This class verifies the completeness of the defined enum values,
+ * the correctness of the string representation, and the behavior
+ * of the utility function shortDeck().
  */
 class CardValueTest {
 
     /**
-     * Tests that all enum values exist.
+     * Verifies that exactly thirteen card values are defined
+     * and that specific expected values exist.
+     *
+     * Expected behavior:
+     * - The enum contains exactly 13 entries.
+     * - ACE and TWO are part of the enum values.
      */
     @Test
     fun testEnumValuesExist() {
@@ -18,7 +27,13 @@ class CardValueTest {
     }
 
     /**
-     * Tests the toString method.
+     * Verifies that the overridden toString() method returns
+     * the correct textual representation for selected values.
+     *
+     * Expected behavior:
+     * - ACE is represented as "A".
+     * - TEN is represented as "10".
+     * - JACK is represented as "J".
      */
     @Test
     fun testToString() {
@@ -28,11 +43,18 @@ class CardValueTest {
     }
 
     /**
-     * Tests shortDeck function.
+     * Verifies that the shortDeck() function returns the correct
+     * reduced set of card values for a 32-card deck variant.
+     *
+     * Expected behavior:
+     * - The returned set contains ACE.
+     * - The returned set does not contain TWO.
+     * - The set contains exactly 8 values.
      */
     @Test
     fun testShortDeck() {
         val shortDeck = CardValue.shortDeck()
+
         assertTrue(shortDeck.contains(CardValue.ACE))
         assertFalse(shortDeck.contains(CardValue.TWO))
         assertEquals(8, shortDeck.size)

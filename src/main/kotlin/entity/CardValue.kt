@@ -1,16 +1,20 @@
 package entity
 
-import java.util.*
+import java.util.EnumSet
 
 /**
- * Enum to distinguish between the 13 possible values in a french-suited card game:
- * 2-10, Jack, Queen, King, and Ace.
+ * Represents the thirteen possible card values in a French-suited deck.
  *
- * The values are ordered according to their most common ordering:
- * 2 < 3 < ... < 10 < Jack < Queen < King < Ace
+ * The values range from TWO to ACE and are ordered according to their
+ * natural ascending rank:
  *
+ * TWO < THREE < ... < TEN < JACK < QUEEN < KING < ACE
+ *
+ * The ordering may be relevant for comparisons depending on the
+ * implemented game logic.
  */
 enum class CardValue {
+
     TWO,
     THREE,
     FOUR,
@@ -23,15 +27,19 @@ enum class CardValue {
     JACK,
     QUEEN,
     KING,
-    ACE,
-    ;
+    ACE;
 
     /**
-     * provide a single character to represent this value.
-     * Returns one of: 2/3/4/5/6/7/8/9/10/J/Q/K/A
+     * Returns the textual representation of this card value.
+     *
+     * The returned string is typically used for display purposes in
+     * the GUI or console output.
+     *
+     * @return A string representing the card value
+     * (e.g., "2", "10", "J", "Q", "K", "A").
      */
     override fun toString() =
-        when(this) {
+        when (this) {
             TWO -> "2"
             THREE -> "3"
             FOUR -> "4"
@@ -53,15 +61,15 @@ enum class CardValue {
     companion object {
 
         /**
-         * A set of values for a reduced set of 4x8=32 cards (starting with the 7)
+         * Returns the reduced 32-card deck values (short deck variant).
+         *
+         * The short deck starts at SEVEN and includes:
+         * SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE.
+         *
+         * @return A set containing the card values used in a 32-card deck.
          */
         fun shortDeck(): Set<CardValue> {
             return EnumSet.of(ACE, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING)
         }
-
     }
-
-
-
-
 }
