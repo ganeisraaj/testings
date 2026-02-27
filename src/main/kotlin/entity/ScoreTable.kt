@@ -20,7 +20,7 @@ package entity
  * - ROYALFLUSH
  */
 enum class ScoreTable {
-
+    NONE,
     HIGHCARD,
     PAIR,
     TWOPAIR,

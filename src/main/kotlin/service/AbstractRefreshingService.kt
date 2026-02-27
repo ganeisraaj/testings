@@ -1,28 +1,35 @@
 package service
 
 /**
- * Abstract service class that handles multiples [Refreshable]s (usually UI elements, such as
- * specialized [tools.aqua.bgw.core.BoardGameScene] classes/instances) which are notified
- * of changes to refresh via the [onAllRefreshables] method.
+ * Abstract base class for services that need to notify registered [Refreshable] instances.
+ *
+ * This class maintains a list of [Refreshable] objects (usually UI scenes) and provides
+ * helper methods to register them and to execute a refresh callback on all registered
+ * refreshables after the game state has changed.
  */
 abstract class AbstractRefreshingService {
+
+    /** The list of registered refreshable objects that are notified on updates. */
     private val refreshables = mutableListOf<Refreshable>()
 
     /**
-     * Adds a new [Refreshable] to the list of refreshables.
+     * Registers a new [Refreshable] to receive refresh callbacks.
      *
-     * @param newRefreshable The [Refreshable] to be added
+     * @param newRefreshable The refreshable instance to be added.
      */
     fun addRefreshable(newRefreshable: Refreshable) {
         refreshables += newRefreshable
     }
 
     /**
-     * Adds each of the provided [Refreshable]s to the list of refreshables.
+     * Executes the given [method] on all registered [Refreshable] instances.
      *
-     * @param method The [Refreshable]s to be added
+     * This should be called by service methods after they have changed the game state,
+     * so that the UI can update accordingly.
+     *
+     * @param method The refresh callback to execute for each registered refreshable.
      */
-    fun onAllRefreshables(method: Refreshable.() -> Unit) =
+    fun onAllRefreshables(method: Refreshable.() -> Unit) {
         refreshables.forEach { it.method() }
-
+    }
 }
