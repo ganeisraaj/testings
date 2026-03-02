@@ -1,20 +1,25 @@
 package service
 
+import entity.Card
+import entity.Player
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
  * Test class for [PlayerActionService].
  *
- * Covers:
- * - pushLeft / pushRight success + drawStack empty branch
- * - switchOne / switchAll success
- * - error branches: no game, no actions left
- * - refresh callbacks via [Refreshable]
+ * Covered behavior:
+ * - pushLeft / pushRight success cases
+ * - pushLeft / pushRight error branch when drawStack is empty (no action consumed)
+ * - switchOne / switchAll success cases
+ * - switchOne invalid indices (no action consumed)
+ * - error cases: no active game, no actions left
+ * - automatic turn end after the second action
+ *
+ * Refresh callbacks are verified using a [Refreshable] spy.
  */
 class PlayerActionServiceTest {
 
@@ -22,14 +27,25 @@ class PlayerActionServiceTest {
     private lateinit var spy: RefreshSpy
 
     /**
-     * Refreshable spy to ensure callback branches are executed.
+     * Refreshable spy to track callback invocations.
      */
     private class RefreshSpy : Refreshable {
+        var turnStartCalls = 0
+        var turnEndCalls = 0
         var pushCalls = 0
         var switchCalls = 0
         var errorCalls = 0
+        val logs = mutableListOf<String>()
 
-        override fun refreshAfterPush(newCard: entity.Card, direction: Int) {
+        override fun refreshAfterTurnStart() {
+            turnStartCalls++
+        }
+
+        override fun refreshAfterTurnEnd() {
+            turnEndCalls++
+        }
+
+        override fun refreshAfterPush(newCard: Card, direction: Int) {
             pushCalls++
         }
 
@@ -40,10 +56,14 @@ class PlayerActionServiceTest {
         override fun refreshAfterError(message: String) {
             errorCalls++
         }
+
+        override fun refreshLog(message: String) {
+            logs += message
+        }
     }
 
     /**
-     * Creates a fresh game state before each test.
+     * Creates a fresh [RootService] and starts a game before each test.
      */
     @BeforeTest
     fun setUp() {
@@ -54,7 +74,7 @@ class PlayerActionServiceTest {
     }
 
     /**
-     * Verifies that pushLeft() reduces actions and triggers refreshAfterPush when drawStack not empty.
+     * Verifies pushLeft consumes an action and triggers refreshAfterPush.
      */
     @Test
     fun testPushLeftSuccess() {
@@ -63,16 +83,16 @@ class PlayerActionServiceTest {
         player.actionsLeft = 2
 
         val beforeCenter = game.centerCards.toList()
+
         rootService.playerActionService.pushLeft()
 
         assertEquals(1, player.actionsLeft)
         assertEquals(1, spy.pushCalls)
-        assertTrue(game.centerCards.size >= 1)
         assertTrue(game.centerCards != beforeCenter || game.discardStack.isNotEmpty())
     }
 
     /**
-     * Verifies that pushRight() reduces actions and triggers refreshAfterPush when drawStack not empty.
+     * Verifies pushRight consumes an action and triggers refreshAfterPush.
      */
     @Test
     fun testPushRightSuccess() {
@@ -87,7 +107,7 @@ class PlayerActionServiceTest {
     }
 
     /**
-     * Verifies that pushLeft() handles empty drawStack by triggering refreshAfterError and returning.
+     * Verifies pushLeft with empty drawStack triggers refreshAfterError and does not consume an action.
      */
     @Test
     fun testPushLeftEmptyDrawStackBranch() {
@@ -99,13 +119,13 @@ class PlayerActionServiceTest {
 
         rootService.playerActionService.pushLeft()
 
-        // reduceAction happens before the empty-stack check
-        assertEquals(1, player.actionsLeft)
+        assertEquals(2, player.actionsLeft)
         assertEquals(1, spy.errorCalls)
+        assertEquals(0, spy.pushCalls)
     }
 
     /**
-     * Verifies that pushRight() handles empty drawStack by triggering refreshAfterError and returning.
+     * Verifies pushRight with empty drawStack triggers refreshAfterError and does not consume an action.
      */
     @Test
     fun testPushRightEmptyDrawStackBranch() {
@@ -117,12 +137,13 @@ class PlayerActionServiceTest {
 
         rootService.playerActionService.pushRight()
 
-        assertEquals(1, player.actionsLeft)
+        assertEquals(2, player.actionsLeft)
         assertEquals(1, spy.errorCalls)
+        assertEquals(0, spy.pushCalls)
     }
 
     /**
-     * Verifies that switchOne() swaps a selected open card with a selected center card.
+     * Verifies switchOne swaps selected cards and consumes an action.
      */
     @Test
     fun testSwitchOneSuccess() {
@@ -145,7 +166,47 @@ class PlayerActionServiceTest {
     }
 
     /**
-     * Verifies that switchAll() swaps pairwise up to min(openCards.size, centerCards.size).
+     * Verifies switchOne fails for an invalid openCardIndex and does not consume an action.
+     */
+    @Test
+    fun testSwitchOneInvalidOpenIndex() {
+        val game = rootService.currentGame!!
+        val player = game.players[game.currentPlayerIndex]
+        player.actionsLeft = 2
+
+        player.openCards.clear()
+        player.openCards.add(game.drawStack.pop())
+
+        assertFailsWith<IndexOutOfBoundsException> {
+            rootService.playerActionService.switchOne(openCardIndex = 5, centerCardIndex = 0)
+        }
+
+        assertEquals(2, player.actionsLeft)
+        assertEquals(0, spy.switchCalls)
+    }
+
+    /**
+     * Verifies switchOne fails for an invalid centerCardIndex and does not consume an action.
+     */
+    @Test
+    fun testSwitchOneInvalidCenterIndex() {
+        val game = rootService.currentGame!!
+        val player = game.players[game.currentPlayerIndex]
+        player.actionsLeft = 2
+
+        player.openCards.clear()
+        player.openCards.add(game.drawStack.pop())
+
+        assertFailsWith<IndexOutOfBoundsException> {
+            rootService.playerActionService.switchOne(openCardIndex = 0, centerCardIndex = 99)
+        }
+
+        assertEquals(2, player.actionsLeft)
+        assertEquals(0, spy.switchCalls)
+    }
+
+    /**
+     * Verifies switchAll swaps pairwise up to the minimum list size and consumes an action.
      */
     @Test
     fun testSwitchAllSuccess() {
@@ -168,20 +229,30 @@ class PlayerActionServiceTest {
     }
 
     /**
-     * Verifies that an action fails if the current player has no actions left.
+     * Verifies switchAll works when the player has fewer open cards than center cards.
      */
     @Test
-    fun testFailsWhenNoActionsLeft() {
+    fun testSwitchAllWhenOpenCardsSmallerThanCenter() {
         val game = rootService.currentGame!!
         val player = game.players[game.currentPlayerIndex]
-        player.actionsLeft = 0
+        player.actionsLeft = 2
 
-        assertFailsWith<IllegalArgumentException> {
-            rootService.playerActionService.pushLeft()
-        }
+        player.openCards.clear()
+        player.openCards.add(game.drawStack.pop())
+
+        val beforeOpen = player.openCards[0]
+        val beforeCenter = game.centerCards[0]
+
+        rootService.playerActionService.switchAll()
+
+        assertEquals(1, player.actionsLeft)
+        assertEquals(beforeCenter, player.openCards[0])
+        assertEquals(beforeOpen, game.centerCards[0])
+        assertEquals(1, spy.switchCalls)
     }
+
     /**
-     * Verifies pushLeft when centerCards is initially empty (covers false branch).
+     * Verifies pushLeft works when centerCards is initially empty.
      */
     @Test
     fun testPushLeftWhenCenterCardsEmpty() {
@@ -195,31 +266,25 @@ class PlayerActionServiceTest {
 
         assertEquals(1, player.actionsLeft)
         assertEquals(1, game.centerCards.size)
+        assertEquals(1, spy.pushCalls)
     }
 
     /**
-     * Verifies switchAll when player has fewer open cards than center cards.
+     * Verifies actions are rejected if the current player has no actions left.
      */
     @Test
-    fun testSwitchAllWhenOpenCardsSmallerThanCenter() {
+    fun testFailsWhenNoActionsLeft() {
         val game = rootService.currentGame!!
         val player = game.players[game.currentPlayerIndex]
-        player.actionsLeft = 2
+        player.actionsLeft = 0
 
-        // centerCards has 3
-        player.openCards.clear()
-        player.openCards.add(game.drawStack.pop()) // only 1 open card
-
-        val beforeOpen = player.openCards[0]
-        val beforeCenter = game.centerCards[0]
-
-        rootService.playerActionService.switchAll()
-
-        assertEquals(beforeCenter, player.openCards[0])
-        assertEquals(beforeOpen, game.centerCards[0])
+        assertFailsWith<IllegalArgumentException> {
+            rootService.playerActionService.pushLeft()
+        }
     }
+
     /**
-     * Verifies that an action fails if no game is active.
+     * Verifies actions are rejected if no game is active.
      */
     @Test
     fun testFailsWithoutGame() {
@@ -228,5 +293,25 @@ class PlayerActionServiceTest {
         assertFailsWith<IllegalArgumentException> {
             rootService.playerActionService.pushRight()
         }
+    }
+
+    /**
+     * Verifies that after the second action the turn ends automatically and the next turn starts.
+     */
+    @Test
+    fun testAutoEndTurnAfterSecondAction() {
+        val game = rootService.currentGame!!
+        val startIndex = game.currentPlayerIndex
+        val player = game.players[startIndex]
+        player.actionsLeft = 2
+
+        rootService.playerActionService.pushLeft()
+        assertEquals(1, player.actionsLeft)
+
+        rootService.playerActionService.pushRight()
+
+        assertEquals((startIndex + 1) % game.players.size, game.currentPlayerIndex)
+        assertTrue(spy.turnEndCalls >= 1)
+        assertTrue(spy.turnStartCalls >= 1)
     }
 }

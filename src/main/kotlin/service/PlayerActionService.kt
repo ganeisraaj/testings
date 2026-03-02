@@ -1,25 +1,38 @@
 package service
 
 import entity.Card
+import entity.Game
 
 /**
  * Service responsible for handling player actions during the current turn.
  *
- * This class belongs to the service layer and therefore contains game logic.
- * It operates on the currently active game stored in [RootService.currentGame].
+ * This service contains the game logic related to actions a player can perform
+ * during their turn. It operates on the currently active game stored in
+ * [RootService.currentGame].
  *
- * UML public methods:
+ * Public UML methods:
  * - [pushLeft]
  * - [pushRight]
  * - [switchOne]
  * - [switchAll]
  *
- * UML private method:
- * - reduceAction()
- *
  * @property rootService Reference to the central [RootService].
  */
 class PlayerActionService(private val rootService: RootService) : AbstractRefreshingService() {
+
+    /**
+     * Returns the currently active game.
+     *
+     * @throws IllegalArgumentException if no game is active.
+     */
+    private fun requireGame(): Game =
+        rootService.currentGame ?: throw IllegalArgumentException("No active game.")
+
+    /**
+     * Returns the current player of the given game.
+     */
+    private fun currentPlayer(game: Game) =
+        game.players[game.currentPlayerIndex]
 
     /**
      * Pushes the center cards to the left.
@@ -27,23 +40,30 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
      * Preconditions:
      * - A game must be active.
      * - The current player must have at least one action left.
+     * - The draw stack must not be empty.
      *
      * Postconditions:
-     * - The current player's actionsLeft is decreased by 1.
-     * - If drawStack is empty: [Refreshable.refreshAfterError] is triggered and the method returns.
-     * - Otherwise: a new card is drawn into the center and one card is moved to discardStack.
-     * - [Refreshable.refreshAfterPush] is triggered with direction = -1.
+     * - One card is removed from the left side of the center (if available)
+     *   and placed on the discard stack.
+     * - A new card is drawn from the draw stack and added to the center.
+     * - The current player's remaining actions are reduced by one.
+     * - If no actions remain afterwards, the turn ends automatically.
+     * - [Refreshable.refreshAfterPush] is triggered.
      *
-     * @throws IllegalArgumentException if no game is active or the current player has no actions left.
+     * If the draw stack is empty, the method triggers
+     * [Refreshable.refreshAfterError] and returns without consuming an action.
+     *
+     * @throws IllegalArgumentException if no game is active.
      */
     fun pushLeft() {
-        val game = rootService.currentGame ?: throw IllegalArgumentException("No active game.")
-        reduceAction()
+        val game = requireGame()
 
         if (game.drawStack.isEmpty()) {
             onAllRefreshables { refreshAfterError("Draw stack is empty.") }
             return
         }
+
+        reduceAction(game)
 
         val newCard = game.drawStack.pop()
         if (game.centerCards.isNotEmpty()) {
@@ -60,23 +80,31 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
      * Preconditions:
      * - A game must be active.
      * - The current player must have at least one action left.
+     * - The draw stack must not be empty.
      *
      * Postconditions:
-     * - The current player's actionsLeft is decreased by 1.
-     * - If drawStack is empty: [Refreshable.refreshAfterError] is triggered and the method returns.
-     * - Otherwise: a new card is drawn into the center and one card is moved to discardStack.
-     * - [Refreshable.refreshAfterPush] is triggered with direction = +1.
+     * - One card is removed from the right side of the center (if available)
+     *   and placed on the discard stack.
+     * - A new card is drawn from the draw stack and inserted at the beginning
+     *   of the center.
+     * - The current player's remaining actions are reduced by one.
+     * - If no actions remain afterwards, the turn ends automatically.
+     * - [Refreshable.refreshAfterPush] is triggered.
      *
-     * @throws IllegalArgumentException if no game is active or the current player has no actions left.
+     * If the draw stack is empty, the method triggers
+     * [Refreshable.refreshAfterError] and returns without consuming an action.
+     *
+     * @throws IllegalArgumentException if no game is active.
      */
     fun pushRight() {
-        val game = rootService.currentGame ?: throw IllegalArgumentException("No active game.")
-        reduceAction()
+        val game = requireGame()
 
         if (game.drawStack.isEmpty()) {
             onAllRefreshables { refreshAfterError("Draw stack is empty.") }
             return
         }
+
+        reduceAction(game)
 
         val newCard = game.drawStack.pop()
         if (game.centerCards.isNotEmpty()) {
@@ -88,28 +116,37 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Switches one open card of the current player with one center card.
+     * Switches one open card of the current player with a center card.
      *
      * Preconditions:
      * - A game must be active.
      * - The current player must have at least one action left.
-     * - Indices must be within bounds.
+     * - Both indices must be within valid bounds.
      *
      * Postconditions:
      * - The selected open card and center card are swapped.
-     * - The current player's actionsLeft is decreased by 1.
+     * - The current player's remaining actions are reduced by one.
+     * - If no actions remain afterwards, the turn ends automatically.
      * - [Refreshable.refreshAfterSwitch] is triggered.
      *
-     * @param openCardIndex Index of the open card in the current player's openCards list.
-     * @param centerCardIndex Index of the card in the game's centerCards list.
+     * @param openCardIndex Index of the player's open card.
+     * @param centerCardIndex Index of the center card.
      *
-     * @throws IllegalArgumentException if no game is active or the current player has no actions left.
+     * @throws IllegalArgumentException if no game is active.
      * @throws IndexOutOfBoundsException if an index is invalid.
      */
     fun switchOne(openCardIndex: Int, centerCardIndex: Int) {
-        val game = rootService.currentGame ?: throw IllegalArgumentException("No active game.")
-        val player = game.players[game.currentPlayerIndex]
-        reduceAction()
+        val game = requireGame()
+        val player = currentPlayer(game)
+
+        if (openCardIndex !in player.openCards.indices) {
+            throw IndexOutOfBoundsException("openCardIndex out of bounds: $openCardIndex")
+        }
+        if (centerCardIndex !in game.centerCards.indices) {
+            throw IndexOutOfBoundsException("centerCardIndex out of bounds: $centerCardIndex")
+        }
+
+        reduceAction(game)
 
         val temp: Card = player.openCards[openCardIndex]
         player.openCards[openCardIndex] = game.centerCards[centerCardIndex]
@@ -121,21 +158,25 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     /**
      * Switches all open cards of the current player with the center cards.
      *
+     * Cards are swapped pairwise up to the minimum size of both lists.
+     *
      * Preconditions:
      * - A game must be active.
      * - The current player must have at least one action left.
      *
      * Postconditions:
-     * - Cards are swapped pairwise up to min(openCards.size, centerCards.size).
-     * - The current player's actionsLeft is decreased by 1.
+     * - Cards are exchanged pairwise.
+     * - The current player's remaining actions are reduced by one.
+     * - If no actions remain afterwards, the turn ends automatically.
      * - [Refreshable.refreshAfterSwitch] is triggered.
      *
-     * @throws IllegalArgumentException if no game is active or the current player has no actions left.
+     * @throws IllegalArgumentException if no game is active.
      */
     fun switchAll() {
-        val game = rootService.currentGame ?: throw IllegalArgumentException("No active game.")
-        val player = game.players[game.currentPlayerIndex]
-        reduceAction()
+        val game = requireGame()
+        val player = currentPlayer(game)
+
+        reduceAction(game)
 
         val n = minOf(player.openCards.size, game.centerCards.size)
         for (i in 0 until n) {
@@ -148,21 +189,21 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Reduces the remaining actions of the current player by one.
+     * Decreases the remaining actions of the current player by one.
      *
-     * Preconditions:
-     * - A game must be active.
-     * - actionsLeft > 0
+     * If the player has no actions left afterwards, the turn is ended automatically.
      *
-     * Postconditions:
-     * - actionsLeft is decreased by 1.
-     *
-     * @throws IllegalArgumentException if no game is active or no actions are left.
+     * @throws IllegalArgumentException if no game is active.
+     * @throws IllegalArgumentException if the player has no actions left.
      */
-    private fun reduceAction() {
-        val game = rootService.currentGame ?: throw IllegalArgumentException("No active game.")
-        val player = game.players[game.currentPlayerIndex]
+    private fun reduceAction(game: Game) {
+        val player = currentPlayer(game)
         require(player.actionsLeft > 0) { "No actions left for current player." }
+
         player.actionsLeft -= 1
+
+        if (player.actionsLeft == 0) {
+            rootService.gameService.endTurn()
+        }
     }
 }
