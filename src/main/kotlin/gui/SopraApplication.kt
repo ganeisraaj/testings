@@ -1,30 +1,38 @@
 package gui
 
-import tools.aqua.bgw.core.BoardGameApplication
 import service.RootService
+import tools.aqua.bgw.core.BoardGameApplication
 
 /**
- * Represents the main application for the SoPra board game.
- * The application initializes the [RootService] and displays the scenes.
+ * Main application class for Push Poker.
+ * Orchestrates scene switching and holds the RootService.
  */
-class SopraApplication : BoardGameApplication("SoPra Game") {
+class SopraApplication : BoardGameApplication("Push Poker") {
 
-    /**
-     * The root service instance. This is used to call service methods and access the entity layer.
-     */
-    val rootService: RootService = RootService()
+    private val rootService = RootService()
 
-    /**
-     * The main game scene displayed in the application.
-     */
-    private val helloScene = HelloScene()
+    private val mainMenuScene = MainMenuScene(rootService, this)
+    private val gameNextPlayerScene = GameNextPlayerScene(rootService, this)
+    private val gameScene = GameScene(rootService)
+    private val gameFinishedScene = GameFinishedScene(rootService, this)
 
-    /**
-     * Initializes the application by displaying the [HelloScene].
-     */
     init {
-        this.showGameScene(helloScene)
+        showMainMenu()
     }
 
-}
+    fun showMainMenu() {
+        this.showGameScene(mainMenuScene)
+    }
 
+    fun showGameScene() {
+        this.showGameScene(gameScene)
+    }
+
+    fun showNextPlayerScene() {
+        this.showGameScene(gameNextPlayerScene)
+    }
+
+    fun showGameFinishedScene() {
+        this.showGameScene(gameFinishedScene)
+    }
+}

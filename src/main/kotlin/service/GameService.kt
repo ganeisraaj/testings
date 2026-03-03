@@ -21,41 +21,17 @@ import kotlin.random.Random
  * - refillDrawStack()
  * - evaluateCards(player)
  * - endTurn()
- *
- * @property rootService Reference to the central [RootService].
  */
 class GameService(private val rootService: RootService) : AbstractRefreshingService() {
 
-    /**
-     * Returns the currently active game.
-     *
-     * @throws IllegalArgumentException if no game is active.
-     */
     private fun requireGame(): Game =
         rootService.currentGame ?: throw IllegalArgumentException("No active game.")
 
     /**
-     * Starts a new game with the given player names and selected total rounds.
+     * Starts a new game.
      *
-     * Preconditions:
-     * - playerNames.size in 2..4
-     * - all names are non-blank
-     * - totalRounds > 0
-     *
-     * Postconditions:
-     * - [RootService.currentGame] is initialized with:
-     *   - currentRound = 1
-     *   - totalRounds = totalRounds
-     *   - currentPlayerIndex = 0
-     * - A shuffled drawStack is created.
-     * - centerCards contains exactly 3 cards (drawn from drawStack).
-     * - Each player receives exactly 5 hidden cards.
-     * - Log + refresh callbacks are triggered.
-     *
-     * @param playerNames Player names (2..4 players).
-     * @param totalRounds Total number of rounds for the game.
-     *
-     * @throws IllegalArgumentException if preconditions are violated.
+     * - 3 center cards
+     * - 2 hidden + 3 open cards per player
      */
     fun startNewGame(playerNames: MutableList<String>, totalRounds: Int) {
         require(playerNames.size in 2..4) { "A game requires 2 to 4 players." }
@@ -75,11 +51,18 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
 
         createDrawStack()
 
+        // 3 center cards
         game.centerCards.clear()
         repeat(3) { game.centerCards.add(game.drawStack.pop()) }
 
-        repeat(5) {
+        // 2 hidden cards per player
+        repeat(2) {
             players.forEach { p -> p.hiddenCards.add(game.drawStack.pop()) }
+        }
+
+        // 3 open cards per player
+        repeat(3) {
+            players.forEach { p -> p.openCards.add(game.drawStack.pop()) }
         }
 
         updateLog("New game started with ${players.size} players and $totalRounds rounds.")
@@ -87,20 +70,13 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Ends the currently active game.
-     *
-     * Preconditions:
-     * - A game must be active.
-     *
-     * Postconditions:
-     * - A ranking is computed by score strength (based on [ScoreTable] ordinal).
-     * - [RootService.currentGame] is set to null.
-     * - [Refreshable.refreshAfterGameEnd] is called.
-     *
-     * @throws IllegalArgumentException if no game is active.
+     * Ends the game and sends ranking to view layer.
      */
     fun endGame() {
         val game = requireGame()
+
+        // evaluate all players before ranking
+        game.players.forEach { evaluateCards(it) }
 
         val ranking = game.players.sortedByDescending { it.score.ordinal }
 
@@ -109,18 +85,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Appends a message to the game log and notifies all refreshables.
-     *
-     * Preconditions:
-     * - A game must be active.
-     *
-     * Postconditions:
-     * - message is appended to game.log
-     * - [Refreshable.refreshLog] is called with the message
-     *
-     * @param message The log message to append.
-     *
-     * @throws IllegalArgumentException if no game is active.
+     * Adds message to log and notifies GUI.
      */
     fun updateLog(message: String) {
         val game = requireGame()
@@ -129,18 +94,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Refills the draw stack from the discard stack.
-     *
-     * Preconditions:
-     * - A game must be active.
-     * - discardStack is not empty.
-     *
-     * Postconditions:
-     * - All cards from discardStack are moved to drawStack.
-     * - The moved cards are shuffled before being added.
-     *
-     * @throws IllegalArgumentException if no game is active.
-     * @throws IllegalArgumentException if discardStack is empty.
+     * Refills draw stack from discard stack (spec rule).
      */
     fun refillDrawStack() {
         val game = requireGame()
@@ -156,35 +110,12 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Evaluates the given player's hand and updates the player's [ScoreTable].
-     *
-     * The evaluation is based on the player's private cards:
-     * - hiddenCards (2) + openCards (3) = 5-card hand
-     *
-     * Preconditions:
-     * - A game must be active.
-     *
-     * Postconditions:
-     * - player.score is set according to standard 5-card poker ranking:
-     *   NONE, HIGHCARD, PAIR, TWOPAIR, SET, STRAIGHT, FLUSH, FULLHOUSE,
-     *   FOUROFAKIND, STRAIGHTFLUSH, ROYALFLUSH
-     *
-     * If the player does not currently hold 5 cards in total, the method falls back to:
-     * - NONE if the player has no cards at all
-     * - HIGHCARD otherwise
-     *
-     * @param player The player whose cards are evaluated.
-     *
-     * @throws IllegalArgumentException if no game is active.
+     * Evaluates 5-card poker hand.
      */
     fun evaluateCards(player: Player) {
         requireGame()
 
-        val hand = (player.hiddenCards + player.openCards)
-        if (hand.isEmpty()) {
-            player.score = ScoreTable.NONE
-            return
-        }
+        val hand = player.hiddenCards + player.openCards
         if (hand.size != 5) {
             player.score = ScoreTable.HIGHCARD
             return
@@ -214,21 +145,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Ends the current player's turn and switches to the next player.
-     *
-     * Preconditions:
-     * - A game must be active.
-     * - The game must have at least 2 players.
-     *
-     * Postconditions:
-     * - currentPlayerIndex advances by 1 (mod number of players).
-     * - If the index wraps to 0, currentRound increases by 1.
-     * - If currentRound exceeds totalRounds after incrementing, the game ends.
-     * - Otherwise, the next player's actionsLeft is reset to 2.
-     * - refreshAfterTurnEnd + refreshAfterTurnStart are called.
-     *
-     * @throws IllegalArgumentException if no game is active.
-     * @throws IllegalArgumentException if invalid player count.
+     * Ends turn and switches to next player.
      */
     fun endTurn() {
         val game = requireGame()
@@ -253,19 +170,6 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         onAllRefreshables { refreshAfterTurnStart() }
     }
 
-    /**
-     * Creates and shuffles the draw stack for the currently active game.
-     *
-     * UML: createDrawStack() is private.
-     *
-     * Preconditions:
-     * - A game must be active.
-     *
-     * Postconditions:
-     * - drawStack contains 52 shuffled cards.
-     *
-     * @throws IllegalArgumentException if no game is active.
-     */
     private fun createDrawStack() {
         val game = requireGame()
 
@@ -275,17 +179,13 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
                 cards.add(Card(suit, value))
             }
         }
+
         cards.shuffle(Random(System.nanoTime()))
 
         game.drawStack.clear()
         game.drawStack.addAll(cards)
     }
 
-    /**
-     * Returns whether the given sorted ranks represent a straight.
-     *
-     * Supports the special case A-2-3-4-5.
-     */
     private fun isStraight(sortedRanks: List<Int>): Boolean {
         val distinct = sortedRanks.distinct()
         if (distinct.size != 5) return false
@@ -296,9 +196,6 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         return distinct == listOf(2, 3, 4, 5, 14)
     }
 
-    /**
-     * Maps [CardValue] to a numeric rank used for hand evaluation.
-     */
     private fun CardValue.toRank(): Int = when (this) {
         CardValue.TWO -> 2
         CardValue.THREE -> 3
