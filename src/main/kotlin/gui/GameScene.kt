@@ -208,7 +208,7 @@ class GameScene(
         val centers = listOf(center0, center1, center2)
         centers.forEachIndexed { i, view ->
             setCard(view, game.centerCards.getOrNull(i))
-            view.visual = if (selectedCenterIdx == i) ColorVisual(200, 200, 255) else ColorVisual(255, 255, 255)
+            view.posY = if (selectedCenterIdx == i) 275.0 else 295.0
         }
 
         // Reset all player cards
@@ -244,8 +244,10 @@ class GameScene(
                 val handViews = listOf(o1, o2, o3)
                 handViews.forEachIndexed { idx, v -> 
                     setCard(v, p.openCards.getOrNull(idx))
-                    v.visual = if (selectedOpenIdx == idx) ColorVisual(200, 200, 255) else ColorVisual(255, 255, 255)
+                    v.posY = if (selectedOpenIdx == idx) 560.0 else 580.0
                 }
+                bH1.posY = 580.0
+                bH2.posY = 580.0
             } else {
                 h1.showBack()
                 h2.showBack()
