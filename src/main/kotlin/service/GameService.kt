@@ -9,14 +9,12 @@ import entity.ScoreTable
 import kotlin.random.Random
 
 /**
- * Service class that manages the overall game flow. 
- * Handles starting and ending games and moving through turns.
+ * Service for the main game logic and flow.
  */
 class GameService(private val rootService: RootService) : AbstractRefreshingService() {
 
     /**
-     * Initialization method required by the UML diagram.
-     * Currently not used for specific logic.
+     * UML init method.
      */
     fun init() {
         // Current initialization logic if needed
@@ -26,8 +24,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         rootService.currentGame ?: throw IllegalArgumentException("No active game.")
 
     /**
-     * Starts a new game. Sets up players, creates the deck, and
-     * deals the initial hidden and open cards.
+     * Starts a new game and deals cards to everyone.
      */
     fun startNewGame(playersNames: MutableList<String>, totalRounds: Int) {
         // Basic validation
@@ -74,8 +71,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Wraps up the current game session. Evaluates the hands 
-     * of all players and shows the final ranking.
+     * Ends the game and shows final ranks.
      */
     fun endGame() {
         val currentGame = requireGame()
@@ -93,7 +89,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Helper method to send messages to the GUI log.
+     * Adds a message to the log.
      */
     fun updateLogMessage(message: String) {
         val currentGame = requireGame()
@@ -102,7 +98,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Generates a 52-card deck and shuffles it.
+     * Makes and shuffles the 52-card deck.
      */
     fun createDrawStack() {
         val currentGame = requireGame()
@@ -123,8 +119,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Logic to refill the draw stack from the discard pile 
-     * when no cards are left to draw.
+     * Reshuffles discard pile into the draw stack.
      */
     fun refillDrawStack() {
         val currentGame = requireGame()
@@ -146,9 +141,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Evaluates a player's hand and returns the poker category.
-     * // Note: Kicker logic is not needed because identical categories
-     * // result in a draw according to project rules.
+     * Evaluates poker hands. // Categories that are the same are just draws.
      */
     fun evaluateCards(player: Player): ScoreTable {
         val allCards = player.hiddenCards + player.openCards
@@ -216,7 +209,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Progresses the game to the next player and handles round counting.
+     * Starts the next player's turn.
      */
     fun startTurn() {
         val currentGame = requireGame()
@@ -240,7 +233,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Finishes a player's turn and triggers the transition to the next player.
+     * Finishes current turn and goes to startTurn.
      */
     fun endTurn() {
         onAllRefreshables { it.refreshAfterTurnEnd() }
