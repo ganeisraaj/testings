@@ -215,8 +215,8 @@ class GameScene(
             view.posY = if (selectedCenterIdx == i) 275.0 else 295.0
         }
 
-        drawStackLabel.text = "DRAW\n(${game.drawStack.size})"
-        discardLabel.text = "DISCARD\n(${game.discardStack.size})"
+        drawStackLabel.text = "DRAW"
+        discardLabel.text = "DISCARD"
         
         // Show/Hide discard card based on status
         discardView.frontVisual = if (game.discardStack.isEmpty()) cardImages.blankImage else cardImages.backImage
