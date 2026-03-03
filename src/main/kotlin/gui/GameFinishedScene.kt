@@ -65,7 +65,7 @@ class GameFinishedScene(
                     2 -> "3rd Place"
                     else -> "${i + 1}th Place"
                 }
-                labels[i].text = "$pos: ${p.name.uppercase()} (${p.score} pts)"
+                labels[i].text = "$pos: ${p.name.uppercase()} | ${p.score}"
             }
         }
         (application as SopraApplication).showGameFinishedScene()

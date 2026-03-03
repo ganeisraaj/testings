@@ -66,8 +66,8 @@ class MainMenuScene(
         font = Font(size = 12)
     }
 
-    private val statusField = TextField(250, 460, 400, 30, "").apply {
-        isDisabled = true
+    private val errorLabel = Label(250, 460, 400, 30, "").apply {
+        font = Font(size = 14, color = Color(200, 0, 0), fontWeight = Font.FontWeight.BOLD)
     }
 
     private val startBtn = Button(250, 510, 180, 60, "START").apply {
@@ -87,23 +87,23 @@ class MainMenuScene(
             nameLabel, nameField, addBtn,
             playerListBG, player1Label, player2Label, player3Label, player4Label,
             roundsLabel, minusBtn, roundsField, plusBtn, roundsSubtitle,
-            statusField,
+            errorLabel,
             startBtn, quitBtn
         )
 
         addBtn.onMouseClicked = click@{
-            statusField.text = ""
+            errorLabel.text = ""
             val name = nameField.text.trim()
             if (name.isBlank()) {
-                statusField.text = "Error: name cannot be blank."
+                errorLabel.text = "Error: name cannot be blank."
                 return@click
             }
             if (playerNames.size >= 4) {
-                statusField.text = "Error: maximum 4 players allowed."
+                errorLabel.text = "Error: maximum 4 players allowed."
                 return@click
             }
             if (playerNames.contains(name)) {
-                statusField.text = "Error: name already taken."
+                errorLabel.text = "Error: name already taken."
                 return@click
             }
             playerNames.add(name)
@@ -128,14 +128,14 @@ class MainMenuScene(
         }
 
         startBtn.onMouseClicked = click@{
-            statusField.text = ""
+            errorLabel.text = ""
             val rounds = roundsField.text.toIntOrNull()
             if (playerNames.size < 2) {
-                statusField.text = "Error: at least 2 players required."
+                errorLabel.text = "Error: at least 2 players required."
                 return@click
             }
             if (rounds == null || rounds !in 2..7) {
-                statusField.text = "Error: rounds must be between 2 and 7."
+                errorLabel.text = "Error: rounds must be between 2 and 7."
                 return@click
             }
             rootService.gameService.startNewGame(playerNames, rounds)
@@ -155,7 +155,7 @@ class MainMenuScene(
         if (index < playerNames.size) {
             playerNames.removeAt(index)
             updatePlayerList()
-            statusField.text = "Player removed."
+            errorLabel.text = "Player removed."
         }
     }
 

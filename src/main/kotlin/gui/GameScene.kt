@@ -42,14 +42,14 @@ class GameScene(
     }
 
     // Log
-    private val logTitle = Label(40, 460, 320, 30, "LOG")
-    private val log1 = Label(40, 495, 320, 25, "").apply { visual = ColorVisual(255,255,255,100) }
-    private val log2 = Label(40, 520, 320, 25, "").apply { visual = ColorVisual(255,255,255,100) }
-    private val log3 = Label(40, 545, 320, 25, "").apply { visual = ColorVisual(255,255,255,100) }
-    private val log4 = Label(40, 570, 320, 25, "").apply { visual = ColorVisual(255,255,255,100) }
-    private val log5 = Label(40, 595, 320, 25, "").apply { visual = ColorVisual(255,255,255,100) }
+    private val logTitle = Label(40, 460, 320, 30, "LOG").apply { visual = ColorVisual(120, 120, 120) }
+    private val log1 = Label(40, 495, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
+    private val log2 = Label(40, 520, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
+    private val log3 = Label(40, 545, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
+    private val log4 = Label(40, 570, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
+    private val log5 = Label(40, 595, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
     
-    private val logBG = Label(40, 490, 320, 140, "").apply { visual = panelLight }
+    private val logBG = Label(40, 490, 320, 140, "").apply { visual = ColorVisual(150, 150, 150, 180) }
 
     // Helper constructors
     private fun createCard(x: Int, y: Int, rot: Double = 0.0) = CardView(posX = x, posY = y, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage).apply { rotation = rot }
@@ -109,11 +109,11 @@ class GameScene(
     private val rightArrow = Button(735, 330, 40, 40, ">").apply { visual = ColorVisual(255, 150, 0); font = Font(size = 24, fontWeight = Font.FontWeight.BOLD) }
 
     // Controls
-    private val switchActionBtn = Button(1020, 500, 160, 40, "Switch One").apply { visual = ColorVisual(255, 150, 0) }
+    private val switchActionBtn = Button(1020, 500, 160, 40, "Switch").apply { visual = ColorVisual(255, 150, 0) }
     private val switchAllBtn = Button(1020, 550, 160, 40, "Switch All").apply { visual = ColorVisual(255, 150, 0) }
     
-    private val oIdxLabel = Label(1020, 595, 75, 20, "Hand(0-2)")
-    private val cIdxLabel = Label(1105, 595, 75, 20, "Center(0-2)")
+    private val oIdxLabel = Label(1020, 595, 75, 20, "Hand(0-2)").apply { font = Font(size = 11) }
+    private val cIdxLabel = Label(1105, 595, 75, 20, "Center(0-2)").apply { font = Font(size = 11) }
     private val oIdxInput = TextField(1020, 615, 75, 35).apply { prompt = "0-2" }
     private val cIdxInput = TextField(1105, 615, 75, 35).apply { prompt = "0-2" }
     
@@ -143,6 +143,8 @@ class GameScene(
             val c = cIdxInput.text.toIntOrNull()
             if (o != null && c != null) {
                 wrapAction { rootService.playerActionService.switchOne(o, c) }
+            } else {
+                refreshLog("Error: indices 0-2 required")
             }
             return@click
         }
