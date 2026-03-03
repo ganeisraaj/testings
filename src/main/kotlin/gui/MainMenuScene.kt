@@ -47,11 +47,11 @@ class MainMenuScene(
         visual = ColorVisual(100, 180, 255)
     }
 
-    // Vertical list via individual TextFields for editability
-    private val player1Field = TextField(280, 230, 340, 30).apply { font = Font(size = 18); prompt = "Player 1" }
-    private val player2Field = TextField(280, 260, 340, 30).apply { font = Font(size = 18); prompt = "Player 2" }
-    private val player3Field = TextField(280, 290, 340, 30).apply { font = Font(size = 18); prompt = "Player 3" }
-    private val player4Field = TextField(280, 320, 340, 30).apply { font = Font(size = 18); prompt = "Player 4" }
+    // Vertical list via individual TextFields for editability (Storyboard style)
+    private val p1 = TextField(280, 230, 340, 30).apply { font = Font(size = 18); prompt = "Player 1 Name" }
+    private val p2 = TextField(280, 260, 340, 30).apply { font = Font(size = 18); prompt = "Player 2 Name" }
+    private val p3 = TextField(280, 290, 340, 30).apply { font = Font(size = 18); prompt = "Player 3 Name" }
+    private val p4 = TextField(280, 320, 340, 30).apply { font = Font(size = 18); prompt = "Player 4 Name" }
     
     private val playerListBG = Label(280, 220, 340, 140, "").apply {
         visual = ColorVisual(255, 255, 255)
@@ -72,20 +72,20 @@ class MainMenuScene(
 
     private val startBtn = Button(250, 510, 180, 60, "START").apply {
         visual = buttonGreen
+        font = Font(fontWeight = Font.FontWeight.BOLD)
     }
 
     private val quitBtn = Button(470, 510, 180, 60, "QUIT").apply {
         visual = buttonRed
+        font = Font(fontWeight = Font.FontWeight.BOLD)
     }
-
-    private val playerNames = mutableListOf<String>() // No longer used as primary source
 
     init {
         rootService.addRefreshable(this)
         addComponents(
             bg, title, panel,
             nameLabel, nameField, addBtn,
-            playerListBG, player1Field, player2Field, player3Field, player4Field,
+            playerListBG, p1, p2, p3, p4,
             roundsLabel, minusBtn, roundsField, plusBtn, roundsSubtitle,
             errorLabel,
             startBtn, quitBtn
@@ -99,7 +99,7 @@ class MainMenuScene(
                 return@click
             }
             
-            val fields = listOf(player1Field, player2Field, player3Field, player4Field)
+            val fields = listOf(p1, p2, p3, p4)
             val firstEmpty = fields.find { it.text.isBlank() }
             
             if (fields.any { it.text.trim() == name }) {
@@ -131,12 +131,10 @@ class MainMenuScene(
         startBtn.onMouseClicked = click@{
             errorLabel.text = ""
             val rounds = roundsField.text.toIntOrNull()
+            
+            val names = listOf(p1, p2, p3, p4).map { it.text.trim() }.filter { it.isNotEmpty() }.toMutableList()
 
-            val playerNames = listOf(player1Field, player2Field, player3Field, player4Field)
-                .map { it.text.trim() }
-                .filter { it.isNotBlank() }
-
-            if (playerNames.size < 2) {
+            if (names.size < 2) {
                 errorLabel.text = "Error: at least 2 players required."
                 return@click
             }
@@ -144,7 +142,7 @@ class MainMenuScene(
                 errorLabel.text = "Error: rounds must be between 2 and 7."
                 return@click
             }
-            rootService.gameService.startNewGame(playerNames, rounds)
+            rootService.gameService.startNewGame(names, rounds)
         }
 
         quitBtn.onMouseClicked = { application.exit() }

@@ -110,18 +110,17 @@ class GameScene(
     private val rightArrow = Button(735, 330, 40, 40, ">").apply { visual = ColorVisual(255, 150, 0); font = Font(size = 24, fontWeight = Font.FontWeight.BOLD) }
 
     // Controls
-    private val switchActionBtn = Button(980, 480, 160, 40, "Switch").apply { visual = ColorVisual(255, 150, 0) }
-    private val switchAllBtn = Button(980, 530, 160, 40, "Switch All").apply { visual = ColorVisual(255, 150, 0) }
+    private val switchActionBtn = Button(1000, 480, 160, 40, "Switch").apply { visual = ColorVisual(255, 150, 0) }
+    private val switchAllBtn = Button(1000, 530, 160, 40, "Switch All").apply { visual = ColorVisual(255, 150, 0) }
+    private val skipBtn = Button(1000, 580, 160, 40, "Skip Swap").apply { visual = ColorVisual(255, 150, 0) }
     
-    private val oIdxLabel = Label(980, 575, 75, 20, "Hand(0-2)").apply { font = Font(size = 11) }
-    private val cIdxLabel = Label(1065, 575, 75, 20, "Center(0-2)").apply { font = Font(size = 11) }
-    private val oIdxInput = TextField(980, 595, 75, 35).apply { prompt = "0-2" }
-    private val cIdxInput = TextField(1065, 595, 75, 35).apply { prompt = "0-2" }
-    
-    private val endTurnBtn = Button(980, 640, 160, 50, "End Turn").apply {
+    private val endTurnBtn = Button(1000, 630, 160, 50, "End Turn").apply {
         visual = ColorVisual(255, 150, 0)
         font = Font(fontWeight = Font.FontWeight.BOLD)
     }
+
+    private var selectedOpenIdx: Int? = null
+    private var selectedCenterIdx: Int? = null
 
     init {
         rootService.addRefreshable(this)
@@ -131,25 +130,39 @@ class GameScene(
             drawStackView, drawStackLabel, discardView, discardLabel,
             center0, center1, center2,
             leftArrow, rightArrow,
-            oIdxLabel, cIdxLabel, oIdxInput, cIdxInput, switchActionBtn, switchAllBtn, endTurnBtn
+            switchActionBtn, switchAllBtn, skipBtn, endTurnBtn
         )
         
         allPlayerCards.forEach { addComponents(it) }
 
+        // Click handlers for cards (Selection)
+        listOf(bO1, bO2, bO3).forEachIndexed { i, view ->
+            view.onMouseClicked = {
+                selectedOpenIdx = if (selectedOpenIdx == i) null else i
+                updateUI()
+            }
+        }
+        listOf(center0, center1, center2).forEachIndexed { i, view ->
+            view.onMouseClicked = {
+                selectedCenterIdx = if (selectedCenterIdx == i) null else i
+                updateUI()
+            }
+        }
+
         leftArrow.onMouseClicked = click@{ wrapAction { rootService.playerActionService.pushLeft() }; return@click }
         rightArrow.onMouseClicked = click@{ wrapAction { rootService.playerActionService.pushRight() }; return@click }
         switchAllBtn.onMouseClicked = click@{ wrapAction { rootService.playerActionService.switchAll() }; return@click }
+        skipBtn.onMouseClicked = click@{ wrapAction { rootService.playerActionService.skip() }; return@click }
+        
         switchActionBtn.onMouseClicked = click@{
-            val o = oIdxInput.text.toIntOrNull()
-            val c = cIdxInput.text.toIntOrNull()
+            val o = selectedOpenIdx
+            val c = selectedCenterIdx
             if (o != null && c != null) {
-                if (o !in 0..2 || c !in 0..2) {
-                    refreshLog("Error: indices must be 0-2")
-                } else {
-                    wrapAction { rootService.playerActionService.switchOne(o, c) }
-                }
+                wrapAction { rootService.playerActionService.switchOne(o, c) }
+                selectedOpenIdx = null
+                selectedCenterIdx = null
             } else {
-                refreshLog("Error: indices 0-2 required")
+                refreshLog("Select 1 hand + 1 center card!")
             }
             return@click
         }
@@ -161,10 +174,12 @@ class GameScene(
     }
 
     override fun refreshAfterStartNewGame() = updateUI()
-    override fun refreshAfterTurnStart() = updateUI()
-    override fun refreshAfterTurnEnd() {
+    override fun refreshAfterTurnStart() {
+        selectedOpenIdx = null
+        selectedCenterIdx = null
         updateUI()
     }
+    override fun refreshAfterTurnEnd() = updateUI()
     override fun refreshAfterPush(newCard: Card, direction: Int) = updateUI()
     override fun refreshAfterSwitch() = updateUI()
     override fun refreshAfterError(message: String) = refreshLog("Error: $message")
@@ -187,12 +202,14 @@ class GameScene(
 
         roundField.text = "ROUND: ${game.currentRound}/${game.totalRounds}"
         actionsField.text = "Actions: ${player.actionsLeft}/2"
-        currentPlayerLabel.text = "Player: ${player.name}"
+        currentPlayerLabel.text = "Current Player: ${player.name}"
 
         // Update center cards
-        setCard(center0, game.centerCards.getOrNull(0))
-        setCard(center1, game.centerCards.getOrNull(1))
-        setCard(center2, game.centerCards.getOrNull(2))
+        val centers = listOf(center0, center1, center2)
+        centers.forEachIndexed { i, view ->
+            setCard(view, game.centerCards.getOrNull(i))
+            view.visual = if (selectedCenterIdx == i) ColorVisual(200, 200, 255) else ColorVisual(255, 255, 255)
+        }
 
         // Reset all player cards
         allPlayerCards.forEach { it.isVisible = false }
@@ -203,8 +220,8 @@ class GameScene(
             val rel = (i - game.currentPlayerIndex + game.players.size) % game.players.size
             
             val target = when(game.players.size) {
-                2 -> if (rel == 0) 0 else 2 // 0=Bottom, 2=Top
-                3 -> when (rel) { 0 -> 0; 1 -> 1; else -> 3 } // Bottom, Left, Right
+                2 -> if (rel == 0) 0 else 2 
+                3 -> when (rel) { 0 -> 0; 1 -> 1; else -> 3 } 
                 else -> when (rel) { 0 -> 0; 1 -> 1; 2 -> 2; else -> 3 }
             }
             
@@ -224,14 +241,18 @@ class GameScene(
             if (target == 0) {
                 setCard(h1, p.hiddenCards.getOrNull(0))
                 setCard(h2, p.hiddenCards.getOrNull(1))
+                val handViews = listOf(o1, o2, o3)
+                handViews.forEachIndexed { idx, v -> 
+                    setCard(v, p.openCards.getOrNull(idx))
+                    v.visual = if (selectedOpenIdx == idx) ColorVisual(200, 200, 255) else ColorVisual(255, 255, 255)
+                }
             } else {
                 h1.showBack()
                 h2.showBack()
+                setCard(o1, p.openCards.getOrNull(0))
+                setCard(o2, p.openCards.getOrNull(1))
+                setCard(o3, p.openCards.getOrNull(2))
             }
-            
-            setCard(o1, p.openCards.getOrNull(0))
-            setCard(o2, p.openCards.getOrNull(1))
-            setCard(o3, p.openCards.getOrNull(2))
         }
     }
 

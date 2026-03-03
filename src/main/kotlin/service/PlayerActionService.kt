@@ -15,7 +15,12 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
         val game = requireGame()
         val player = currentPlayer(game)
 
-        ensureDrawStackAvailable(game, player)
+        try {
+            ensureDrawStackAvailable(game, player)
+        } catch (e: IllegalStateException) {
+            onAllRefreshables { refreshAfterError(e.message ?: "Error") }
+            return
+        }
 
         reduceAction(game)
 
@@ -37,7 +42,12 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
         val game = requireGame()
         val player = currentPlayer(game)
 
-        ensureDrawStackAvailable(game, player)
+        try {
+            ensureDrawStackAvailable(game, player)
+        } catch (e: IllegalStateException) {
+            onAllRefreshables { refreshAfterError(e.message ?: "Error") }
+            return
+        }
 
         reduceAction(game)
 
@@ -103,6 +113,23 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
             "${player.name} swapped all open cards with the center cards."
         )
 
+        onAllRefreshables { refreshAfterSwitch() }
+
+        if (currentPlayer(game).actionsLeft == 0) {
+            rootService.gameService.endTurn()
+        }
+    }
+
+    /**
+     * Skips an action (Skip Swap).
+     */
+    fun skip() {
+        val game = requireGame()
+        val player = currentPlayer(game)
+        
+        reduceAction(game)
+        
+        rootService.gameService.updateLog("${player.name} skipped an action.")
         onAllRefreshables { refreshAfterSwitch() }
 
         if (currentPlayer(game).actionsLeft == 0) {
