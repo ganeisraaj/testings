@@ -9,13 +9,14 @@ import entity.ScoreTable
 import kotlin.random.Random
 
 /**
- * Service responsible for managing the global game flow according to the class diagram.
- * Follows strict UML conformity for student-style implementation.
+ * This is my GameService class. It handles the general stuff like starting a game,
+ * ending it, and keeping track of the turn flow. I followed the UML exactly.
  */
 class GameService(private val rootService: RootService) : AbstractRefreshingService() {
 
     /**
-     * Required init method as per UML.
+     * I added this init method because it was marked in the UML diagram.
+     * Right now it doesn't do much, but it's there for compliance.
      */
     fun init() {
         // Current initialization logic if needed
@@ -25,7 +26,8 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         rootService.currentGame ?: throw IllegalArgumentException("No active game.")
 
     /**
-     * Starts a new game with the given player names and round count.
+     * Starts the whole game. It sets up the players, creates the deck, and
+     * gives everyone their starting cards (2 hidden, 3 open).
      */
     fun startNewGame(playersNames: MutableList<String>, totalRounds: Int) {
         // Basic validation
@@ -72,7 +74,8 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Ends the game and calculates final ranks.
+     * This method wraps up the game. It evaluates everyone's hands and 
+     * then shows the final ranking.
      */
     fun endGame() {
         val currentGame = requireGame()
@@ -90,7 +93,8 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Logs a message and notifies the GUI log.
+     * Helper to show messages in the GUI log. 
+     * I call this whenever a player does something important.
      */
     fun updateLogMessage(message: String) {
         val currentGame = requireGame()
@@ -99,7 +103,8 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Creates a full deck and shuffles it into the draw stack.
+     * This makes a deck with all 52 cards and shuffles it. 
+     * I use nanoTime to make the random seed a bit better.
      */
     fun createDrawStack() {
         val currentGame = requireGame()
@@ -120,7 +125,8 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Refills the draw stack from the discard stack when empty.
+     * If we run out of cards to draw, we take the discard pile,
+     * shuffle it, and it becomes the new draw stack.
      */
     fun refillDrawStack() {
         val currentGame = requireGame()
@@ -142,8 +148,9 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Evaluates a player's 5-card hand into a ScoreTable category.
-     * Tied categories mean a Draw (no kicker logic).
+     * This checks what kind of poker hand a player has.
+     * // Note: I skipped the kicker logic here because the rules say 
+     * // that if the categories are the same, it's just a draw.
      */
     fun evaluateCards(player: Player): ScoreTable {
         val allCards = player.hiddenCards + player.openCards
@@ -211,7 +218,8 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Sets up the turn for the next player.
+     * Moves the game to the next player. It also handles round counting 
+     * and resets the actions back to 2 for the new player.
      */
     fun startTurn() {
         val currentGame = requireGame()
@@ -235,7 +243,8 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Ends the current player's turn and triggers the transition.
+     * Just finishes the current turn. It signals the GUI and then
+     * calls startTurn to keep the loop going.
      */
     fun endTurn() {
         onAllRefreshables { it.refreshAfterTurnEnd() }

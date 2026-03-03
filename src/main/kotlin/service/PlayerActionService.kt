@@ -4,8 +4,8 @@ import entity.Card
 import entity.Game
 
 /**
- * Service handling individual player actions like pushing and switching.
- * Strictly adheres to the GameClassDiagramNEW.jpg and university rules.
+ * This service class is where I put all the player moves like pushing cards
+ * and swapping them. I tried to keep it very close to the UML chart.
  */
 class PlayerActionService(private val rootService: RootService) : AbstractRefreshingService() {
 
@@ -13,8 +13,8 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
         rootService.currentGame ?: throw IllegalArgumentException("No active game exists.")
 
     /**
-     * Pushes a card from the draw stack into the center row from the left.
-     * The rightmost card is ejected into the discard stack.
+     * This pushes a new card into the center from the left side. 
+     * The card that was on the right gets pushed out into the discard pile.
      */
     fun pushLeft() {
         val currentGame = requireGame()
@@ -49,8 +49,8 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Pushes a card from the draw stack into the center row from the right.
-     * The leftmost card is ejected into the discard stack.
+     * Same as pushLeft but from the other side. A new card comes in from the 
+     * right and the leftmost one is removed.
      */
     fun pushRight() {
         val currentGame = requireGame()
@@ -85,7 +85,8 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Swaps one open card with one center card.
+     * Swaps one card from the player's hand with one from the middle. 
+     * I check the indices first to make sure everything is in range.
      */
     fun switchOne(openCardIndex: Int, centerCardIndex: Int) {
         val currentGame = requireGame()
@@ -112,7 +113,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Swaps all three open cards with the center cards.
+     * Swaps all three open cards with the three center cards at once.
      */
     fun switchAll() {
         val currentGame = requireGame()
@@ -139,8 +140,8 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Helper to skip a swap action (Specific logic for Push-Poker).
-     * UML: This follows the 'exactly 2 actions' rule.
+     * This method allows players to pass if they don't want to swap anything.
+     * // I had to check the rules again: this still counts as one of the 2 actions!
      */
     fun skip() {
         val currentGame = requireGame()
@@ -157,7 +158,8 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Reduces the action count of the current player.
+     * Keeps track of how many moves the player has left in their turn.
+     * If they run out, it throws an error.
      */
     fun reduceAction() {
         val currentGame = requireGame()
