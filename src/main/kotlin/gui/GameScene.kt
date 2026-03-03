@@ -102,8 +102,12 @@ class GameScene(
     private val drawStackView = CardView(posX = 350, posY = 295, width = 75, height = 110, front = cardImages.backImage, back = cardImages.backImage)
     private val discardView = CardView(posX = 790, posY = 295, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage)
     
-    private val drawStackLabel = Label(350, 295, 75, 110, "DrawStack").apply { font = Font(size = 12, color = Color(255, 255, 255)) }
-    private val discardLabel = Label(790, 295, 75, 110, "Discard").apply { font = Font(size = 12) }
+    private val drawStackLabel = Label(350, 295, 75, 110, "DRAW").apply { 
+        font = Font(size = 14, color = Color.WHITE, fontWeight = Font.FontWeight.BOLD) 
+    }
+    private val discardLabel = Label(790, 295, 75, 110, "DISCARD").apply { 
+        font = Font(size = 14, color = Color.WHITE, fontWeight = Font.FontWeight.BOLD) 
+    }
 
     // Arrows
     private val leftArrow = Button(435, 330, 40, 40, "<").apply { visual = ColorVisual(255, 150, 0); font = Font(size = 24, fontWeight = Font.FontWeight.BOLD) }
@@ -210,6 +214,13 @@ class GameScene(
             setCard(view, game.centerCards.getOrNull(i))
             view.posY = if (selectedCenterIdx == i) 275.0 else 295.0
         }
+
+        drawStackLabel.text = "DRAW\n(${game.drawStack.size})"
+        discardLabel.text = "DISCARD\n(${game.discardStack.size})"
+        
+        // Show/Hide discard card based on status
+        discardView.frontVisual = if (game.discardStack.isEmpty()) cardImages.blankImage else cardImages.backImage
+        discardView.showFront()
 
         // Reset all player cards
         allPlayerCards.forEach { it.isVisible = false }
