@@ -42,50 +42,50 @@ class GameScene(
     }
 
     // Log
-    private val logTitle = Label(40, 460, 320, 30, "LOG").apply { visual = ColorVisual(120, 120, 120) }
-    private val log1 = Label(40, 495, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
-    private val log2 = Label(40, 520, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
-    private val log3 = Label(40, 545, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
-    private val log4 = Label(40, 570, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
-    private val log5 = Label(40, 595, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
+    private val logTitle = Label(40, 480, 320, 30, "LOG").apply { visual = ColorVisual(120, 120, 120) }
+    private val log1 = Label(40, 515, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
+    private val log2 = Label(40, 540, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
+    private val log3 = Label(40, 565, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
+    private val log4 = Label(40, 590, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
+    private val log5 = Label(40, 615, 320, 25, "").apply { visual = ColorVisual(255,255,255,100); font = Font(size = 12) }
     
-    private val logBG = Label(40, 490, 320, 140, "").apply { visual = ColorVisual(150, 150, 150, 180) }
+    private val logBG = Label(40, 510, 320, 140, "").apply { visual = ColorVisual(150, 150, 150, 180) }
 
     // Helper constructors
     private fun createCard(x: Int, y: Int, rot: Double = 0.0) = CardView(posX = x, posY = y, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage).apply { rotation = rot }
     private fun createPlayerLabel(cx: Int, cy: Int, rot: Double) = Label(posX = cx - 100, posY = cy - 15, width = 200, height = 30, "").apply { font = Font(size = 20, fontWeight = Font.FontWeight.BOLD); rotation = rot; text = "test" }
 
     // Bottom (Player 0 / Current)
-    private val bH1 = createCard(350, 520)
-    private val bH2 = createCard(430, 520)
-    private val bO1 = createCard(540, 520)
-    private val bO2 = createCard(620, 520)
-    private val bO3 = createCard(700, 520)
-    private val bName = createPlayerLabel(560, 490, 0.0)
+    private val bH1 = createCard(420, 580)
+    private val bH2 = createCard(500, 580)
+    private val bO1 = createCard(600, 580)
+    private val bO2 = createCard(680, 580)
+    private val bO3 = createCard(760, 580)
+    private val bName = createPlayerLabel(630, 545, 0.0)
     
     // Left
-    private val lH1 = createCard(60, 180, 90.0)
-    private val lH2 = createCard(60, 260, 90.0)
-    private val lO1 = createCard(60, 360, 90.0)
-    private val lO2 = createCard(60, 440, 90.0)
-    private val lO3 = createCard(60, 520, 90.0)
-    private val lName = createPlayerLabel(160, 350, 90.0)
+    private val lH1 = createCard(40, 40, 90.0)
+    private val lH2 = createCard(40, 110, 90.0)
+    private val lO1 = createCard(40, 200, 90.0)
+    private val lO2 = createCard(40, 270, 90.0)
+    private val lO3 = createCard(40, 340, 90.0)
+    private val lName = createPlayerLabel(140, 190, 90.0)
     
     // Top
-    private val tO1 = createCard(350, 50, 180.0)
-    private val tO2 = createCard(430, 50, 180.0)
-    private val tO3 = createCard(510, 50, 180.0)
-    private val tH1 = createCard(620, 50, 180.0)
-    private val tH2 = createCard(700, 50, 180.0)
-    private val tName = createPlayerLabel(560, 190, 180.0)
+    private val tO1 = createCard(420, 50, 180.0)
+    private val tO2 = createCard(500, 50, 180.0)
+    private val tO3 = createCard(580, 50, 180.0)
+    private val tH1 = createCard(680, 50, 180.0)
+    private val tH2 = createCard(760, 50, 180.0)
+    private val tName = createPlayerLabel(630, 190, 180.0)
     
     // Right
-    private val rO1 = createCard(1060, 150, 270.0)
-    private val rO2 = createCard(1060, 230, 270.0)
-    private val rO3 = createCard(1060, 310, 270.0)
-    private val rH1 = createCard(1060, 410, 270.0)
-    private val rH2 = createCard(1060, 490, 270.0)
-    private val rName = createPlayerLabel(960, 350, 270.0)
+    private val rO1 = createCard(1085, 40, 270.0)
+    private val rO2 = createCard(1085, 110, 270.0)
+    private val rO3 = createCard(1085, 200, 270.0)
+    private val rH1 = createCard(1085, 270, 270.0)
+    private val rH2 = createCard(1085, 340, 270.0)
+    private val rName = createPlayerLabel(985, 190, 270.0)
 
     private val allPlayerCards = listOf(
         bH1, bH2, bO1, bO2, bO3, bName,
@@ -109,15 +109,15 @@ class GameScene(
     private val rightArrow = Button(735, 330, 40, 40, ">").apply { visual = ColorVisual(255, 150, 0); font = Font(size = 24, fontWeight = Font.FontWeight.BOLD) }
 
     // Controls
-    private val switchActionBtn = Button(1020, 500, 160, 40, "Switch").apply { visual = ColorVisual(255, 150, 0) }
-    private val switchAllBtn = Button(1020, 550, 160, 40, "Switch All").apply { visual = ColorVisual(255, 150, 0) }
+    private val switchActionBtn = Button(980, 480, 160, 40, "Switch").apply { visual = ColorVisual(255, 150, 0) }
+    private val switchAllBtn = Button(980, 530, 160, 40, "Switch All").apply { visual = ColorVisual(255, 150, 0) }
     
-    private val oIdxLabel = Label(1020, 595, 75, 20, "Hand(0-2)").apply { font = Font(size = 11) }
-    private val cIdxLabel = Label(1105, 595, 75, 20, "Center(0-2)").apply { font = Font(size = 11) }
-    private val oIdxInput = TextField(1020, 615, 75, 35).apply { prompt = "0-2" }
-    private val cIdxInput = TextField(1105, 615, 75, 35).apply { prompt = "0-2" }
+    private val oIdxLabel = Label(980, 575, 75, 20, "Hand(0-2)").apply { font = Font(size = 11) }
+    private val cIdxLabel = Label(1065, 575, 75, 20, "Center(0-2)").apply { font = Font(size = 11) }
+    private val oIdxInput = TextField(980, 595, 75, 35).apply { prompt = "0-2" }
+    private val cIdxInput = TextField(1065, 595, 75, 35).apply { prompt = "0-2" }
     
-    private val endTurnBtn = Button(850, 640, 150, 50, "End Turn").apply {
+    private val endTurnBtn = Button(980, 640, 160, 50, "End Turn").apply {
         visual = ColorVisual(255, 150, 0)
         font = Font(fontWeight = Font.FontWeight.BOLD)
     }
@@ -157,7 +157,9 @@ class GameScene(
 
     override fun refreshAfterStartNewGame() = updateUI()
     override fun refreshAfterTurnStart() = updateUI()
-    override fun refreshAfterTurnEnd() = updateUI()
+    override fun refreshAfterTurnEnd() {
+        updateUI()
+    }
     override fun refreshAfterPush(newCard: Card, direction: Int) = updateUI()
     override fun refreshAfterSwitch() = updateUI()
     override fun refreshAfterError(message: String) = refreshLog("Error: $message")

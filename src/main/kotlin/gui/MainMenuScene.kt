@@ -160,6 +160,6 @@ class MainMenuScene(
     }
 
     override fun refreshAfterStartNewGame() {
-        (application as SopraApplication).showGameScene()
+        (application as SopraApplication).showNextPlayerScene()
     }
 }
