@@ -37,9 +37,9 @@ class GameScene(
         visual = ColorVisual(180, 220, 180)
         font = Font(fontWeight = Font.FontWeight.BOLD)
     }
-    private val currentPlayerLabel = Label(400, 210, 400, 40, "Current Player: -").apply {
-        font = Font(size = 22, fontWeight = Font.FontWeight.BOLD)
-        visual = ColorVisual(255, 255, 255, 100)
+    private val currentPlayerLabel = Label(400, 195, 400, 50, "Current Player: -").apply {
+        font = Font(size = 24, fontWeight = Font.FontWeight.BOLD, color = Color(255, 255, 255))
+        visual = ColorVisual(0, 0, 0, 60)
     }
 
     // Log
@@ -65,12 +65,12 @@ class GameScene(
     private val bName = createPlayerLabel(630, 550, 0.0)
     
     // Left
-    private val lH1 = createCard(60, 40, 90.0)
-    private val lH2 = createCard(60, 110, 90.0)
-    private val lO1 = createCard(60, 200, 90.0)
-    private val lO2 = createCard(60, 270, 90.0)
-    private val lO3 = createCard(60, 340, 90.0)
-    private val lName = createPlayerLabel(180, 220, 90.0)
+    private val lH1 = createCard(70, 40, 90.0)
+    private val lH2 = createCard(70, 100, 90.0)
+    private val lO1 = createCard(70, 160, 90.0)
+    private val lO2 = createCard(70, 220, 90.0)
+    private val lO3 = createCard(70, 280, 90.0)
+    private val lName = createPlayerLabel(180, 180, 90.0)
     
     // Top
     private val tO1 = createCard(420, 50, 180.0)
@@ -78,15 +78,15 @@ class GameScene(
     private val tO3 = createCard(580, 50, 180.0)
     private val tH1 = createCard(680, 50, 180.0)
     private val tH2 = createCard(760, 50, 180.0)
-    private val tName = createPlayerLabel(630, 180, 0.0) // Keep top name horizontal for readability
+    private val tName = createPlayerLabel(630, 180, 0.0) 
     
     // Right
-    private val rO1 = createCard(1065, 40, 270.0)
-    private val rO2 = createCard(1065, 110, 270.0)
-    private val rO3 = createCard(1065, 200, 270.0)
-    private val rH1 = createCard(1065, 270, 270.0)
-    private val rH2 = createCard(1065, 340, 270.0)
-    private val rName = createPlayerLabel(945, 220, 270.0)
+    private val rO1 = createCard(1055, 40, 270.0)
+    private val rO2 = createCard(1055, 100, 270.0)
+    private val rO3 = createCard(1055, 160, 270.0)
+    private val rH1 = createCard(1055, 220, 270.0)
+    private val rH2 = createCard(1055, 280, 270.0)
+    private val rName = createPlayerLabel(945, 180, 270.0)
 
     private val allPlayerCards = listOf(
         bH1, bH2, bO1, bO2, bO3, bName,

@@ -117,7 +117,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
 
         val hand = player.hiddenCards + player.openCards
         if (hand.size != 5) {
-            player.score = ScoreTable.HIGHCARD
+            player.score = ScoreTable.NONE
             return
         }
 

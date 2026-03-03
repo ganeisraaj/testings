@@ -57,15 +57,23 @@ class GameFinishedScene(
         val labels = listOf(rank1, rank2, rank3, rank4)
         labels.forEach { it.text = "" }
         
+        var lastScore: entity.ScoreTable? = null
+        var lastRank = 1
+        
         ranking.withIndex().forEach { (i, p) ->
             if (i < labels.size) {
-                val pos = when(i) {
-                    0 -> "1st Place"
-                    1 -> "2nd Place"
-                    2 -> "3rd Place"
-                    else -> "${i + 1}th Place"
+                if (p.score != lastScore) {
+                    lastRank = i + 1
+                    lastScore = p.score
                 }
-                labels[i].text = "$pos: ${p.name.uppercase()} | ${p.score}"
+                
+                val pos = when(lastRank) {
+                    1 -> "1st Place"
+                    2 -> "2nd Place"
+                    3 -> "3rd Place"
+                    else -> "${lastRank}th Place"
+                }
+                labels[i].text = "$pos: ${p.name.uppercase()} (${p.score})"
             }
         }
         (application as SopraApplication).showGameFinishedScene()
