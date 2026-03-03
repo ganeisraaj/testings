@@ -145,9 +145,20 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Ends turn and switches to next player.
+     * Ends the current turn.
+     * Triggers turn-end refresh and transitions to startTurn.
      */
     fun endTurn() {
+        val game = requireGame()
+        onAllRefreshables { refreshAfterTurnEnd() }
+        startTurn()
+    }
+
+    /**
+     * Starts the turn for the next player.
+     * Updates player index, handles round increments, and resets actions.
+     */
+    fun startTurn() {
         val game = requireGame()
         require(game.players.size >= 2) { "Game has an invalid number of players." }
 
@@ -165,12 +176,14 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
 
         game.players[newIndex].actionsLeft = 2
 
-        updateLog("Turn ended. Next player: ${game.players[newIndex].name}")
-        onAllRefreshables { refreshAfterTurnEnd() }
+        updateLog("Turn started for ${game.players[newIndex].name}")
         onAllRefreshables { refreshAfterTurnStart() }
     }
 
-    private fun createDrawStack() {
+    /**
+     * Creates and shuffles the draw stack.
+     */
+    fun createDrawStack() {
         val game = requireGame()
 
         val cards = mutableListOf<Card>()
