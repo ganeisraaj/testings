@@ -31,7 +31,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
         game.centerCards.add(newCard)
 
         rootService.gameService.updateLog("${player.name} pushed left.")
-        onAllRefreshables { refreshAfterPush(newCard, -1) }
+        onAllRefreshables { refreshAfterPushLeft(newCard) }
 
         if (currentPlayer(game).actionsLeft == 0) {
             rootService.gameService.endTurn()
@@ -58,7 +58,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
         game.centerCards.add(0, newCard)
 
         rootService.gameService.updateLog("${player.name} pushed right.")
-        onAllRefreshables { refreshAfterPush(newCard, +1) }
+        onAllRefreshables { refreshAfterPushRight(newCard) }
 
         if (currentPlayer(game).actionsLeft == 0) {
             rootService.gameService.endTurn()

@@ -184,7 +184,8 @@ class GameScene(
         updateUI()
     }
     override fun refreshAfterTurnEnd() = updateUI()
-    override fun refreshAfterPush(newCard: Card, direction: Int) = updateUI()
+    override fun refreshAfterPushLeft(newCard: Card) = updateUI()
+    override fun refreshAfterPushRight(newCard: Card) = updateUI()
     override fun refreshAfterSwitch() = updateUI()
     override fun refreshAfterError(message: String) = refreshLog("Error: $message")
     

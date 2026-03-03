@@ -33,12 +33,18 @@ interface Refreshable {
     fun refreshAfterSwitch() {}
 
     /**
-     * Called after a push action was executed.
+     * Called after a push left action was executed.
      *
      * @param newCard The new card that was pushed into the center.
-     * @param direction The push direction (e.g. -1 left, +1 right).
      */
-    fun refreshAfterPush(newCard: Card, direction: Int) {}
+    fun refreshAfterPushLeft(newCard: Card) {}
+
+    /**
+     * Called after a push right action was executed.
+     *
+     * @param newCard The new card that was pushed into the center.
+     */
+    fun refreshAfterPushRight(newCard: Card) {}
 
     /**
      * Called when an error occurred in the service layer.

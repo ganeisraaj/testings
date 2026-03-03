@@ -33,12 +33,12 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
      * - 3 center cards
      * - 2 hidden + 3 open cards per player
      */
-    fun startNewGame(playerNames: MutableList<String>, totalRounds: Int) {
-        require(playerNames.size in 2..4) { "A game requires 2 to 4 players." }
-        require(playerNames.all { it.isNotBlank() }) { "Player names must not be blank." }
+    fun startNewGame(playersNames: MutableList<String>, totalRounds: Int) {
+        require(playersNames.size in 2..4) { "A game requires 2 to 4 players." }
+        require(playersNames.all { it.isNotBlank() }) { "Player names must not be blank." }
         require(totalRounds > 0) { "Total rounds must be positive." }
 
-        val players = playerNames.map { Player(name = it) }.toMutableList()
+        val players = playersNames.map { Player(name = it) }.toMutableList()
 
         val game = Game(
             totalRounds = totalRounds,
