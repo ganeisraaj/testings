@@ -9,14 +9,14 @@ import entity.ScoreTable
 import kotlin.random.Random
 
 /**
- * This is my GameService class. It handles the general stuff like starting a game,
- * ending it, and keeping track of the turn flow. I followed the UML exactly.
+ * Service class that manages the overall game flow. 
+ * Handles starting and ending games and moving through turns.
  */
 class GameService(private val rootService: RootService) : AbstractRefreshingService() {
 
     /**
-     * I added this init method because it was marked in the UML diagram.
-     * Right now it doesn't do much, but it's there for compliance.
+     * Initialization method required by the UML diagram.
+     * Currently not used for specific logic.
      */
     fun init() {
         // Current initialization logic if needed
@@ -26,8 +26,8 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         rootService.currentGame ?: throw IllegalArgumentException("No active game.")
 
     /**
-     * Starts the whole game. It sets up the players, creates the deck, and
-     * gives everyone their starting cards (2 hidden, 3 open).
+     * Starts a new game. Sets up players, creates the deck, and
+     * deals the initial hidden and open cards.
      */
     fun startNewGame(playersNames: MutableList<String>, totalRounds: Int) {
         // Basic validation
@@ -74,8 +74,8 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * This method wraps up the game. It evaluates everyone's hands and 
-     * then shows the final ranking.
+     * Wraps up the current game session. Evaluates the hands 
+     * of all players and shows the final ranking.
      */
     fun endGame() {
         val currentGame = requireGame()
@@ -93,8 +93,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Helper to show messages in the GUI log. 
-     * I call this whenever a player does something important.
+     * Helper method to send messages to the GUI log.
      */
     fun updateLogMessage(message: String) {
         val currentGame = requireGame()
@@ -103,8 +102,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * This makes a deck with all 52 cards and shuffles it. 
-     * I use nanoTime to make the random seed a bit better.
+     * Generates a 52-card deck and shuffles it.
      */
     fun createDrawStack() {
         val currentGame = requireGame()
@@ -125,8 +123,8 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * If we run out of cards to draw, we take the discard pile,
-     * shuffle it, and it becomes the new draw stack.
+     * Logic to refill the draw stack from the discard pile 
+     * when no cards are left to draw.
      */
     fun refillDrawStack() {
         val currentGame = requireGame()
@@ -148,9 +146,9 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * This checks what kind of poker hand a player has.
-     * // Note: I skipped the kicker logic here because the rules say 
-     * // that if the categories are the same, it's just a draw.
+     * Evaluates a player's hand and returns the poker category.
+     * // Note: Kicker logic is not needed because identical categories
+     * // result in a draw according to project rules.
      */
     fun evaluateCards(player: Player): ScoreTable {
         val allCards = player.hiddenCards + player.openCards
@@ -218,8 +216,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Moves the game to the next player. It also handles round counting 
-     * and resets the actions back to 2 for the new player.
+     * Progresses the game to the next player and handles round counting.
      */
     fun startTurn() {
         val currentGame = requireGame()
@@ -243,8 +240,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Just finishes the current turn. It signals the GUI and then
-     * calls startTurn to keep the loop going.
+     * Finishes a player's turn and triggers the transition to the next player.
      */
     fun endTurn() {
         onAllRefreshables { it.refreshAfterTurnEnd() }

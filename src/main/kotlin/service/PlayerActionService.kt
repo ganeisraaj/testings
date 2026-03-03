@@ -4,8 +4,8 @@ import entity.Card
 import entity.Game
 
 /**
- * This service class is where I put all the player moves like pushing cards
- * and swapping them. I tried to keep it very close to the UML chart.
+ * Service handling player actions like pushing cards and switching them.
+ * Follows the project's UML diagram for player moves.
  */
 class PlayerActionService(private val rootService: RootService) : AbstractRefreshingService() {
 
@@ -13,8 +13,8 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
         rootService.currentGame ?: throw IllegalArgumentException("No active game exists.")
 
     /**
-     * This pushes a new card into the center from the left side. 
-     * The card that was on the right gets pushed out into the discard pile.
+     * Pushes a card from the draw stack into the center row from the left.
+     * The ejected card from the right side goes to the discard stack.
      */
     fun pushLeft() {
         val currentGame = requireGame()
@@ -49,8 +49,8 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Same as pushLeft but from the other side. A new card comes in from the 
-     * right and the leftmost one is removed.
+     * Pushes a card from the draw stack into the center row from the right.
+     * The leftmost card is moved to the discard stack.
      */
     fun pushRight() {
         val currentGame = requireGame()
@@ -85,8 +85,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Swaps one card from the player's hand with one from the middle. 
-     * I check the indices first to make sure everything is in range.
+     * Swaps an open card with a card from the center row.
      */
     fun switchOne(openCardIndex: Int, centerCardIndex: Int) {
         val currentGame = requireGame()
@@ -113,7 +112,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Swaps all three open cards with the three center cards at once.
+     * Swaps all open cards with the center cards.
      */
     fun switchAll() {
         val currentGame = requireGame()
@@ -140,8 +139,8 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * This method allows players to pass if they don't want to swap anything.
-     * // I had to check the rules again: this still counts as one of the 2 actions!
+     * Skips a swap action. 
+     * // Note: Per project rules, skipping still uses one of the two turn actions.
      */
     fun skip() {
         val currentGame = requireGame()
@@ -158,8 +157,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
     }
 
     /**
-     * Keeps track of how many moves the player has left in their turn.
-     * If they run out, it throws an error.
+     * Decrements the remaining action count for the current player.
      */
     fun reduceAction() {
         val currentGame = requireGame()
