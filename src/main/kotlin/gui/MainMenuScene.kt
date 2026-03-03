@@ -47,11 +47,11 @@ class MainMenuScene(
         visual = ColorVisual(100, 180, 255)
     }
 
-    // Vertical list via individual labels
-    private val player1Label = Label(280, 230, 340, 30, "").apply { font = Font(size = 18) }
-    private val player2Label = Label(280, 260, 340, 30, "").apply { font = Font(size = 18) }
-    private val player3Label = Label(280, 290, 340, 30, "").apply { font = Font(size = 18) }
-    private val player4Label = Label(280, 320, 340, 30, "").apply { font = Font(size = 18) }
+    // Vertical list via individual TextFields for editability
+    private val player1Field = TextField(280, 230, 340, 30).apply { font = Font(size = 18); prompt = "Player 1" }
+    private val player2Field = TextField(280, 260, 340, 30).apply { font = Font(size = 18); prompt = "Player 2" }
+    private val player3Field = TextField(280, 290, 340, 30).apply { font = Font(size = 18); prompt = "Player 3" }
+    private val player4Field = TextField(280, 320, 340, 30).apply { font = Font(size = 18); prompt = "Player 4" }
     
     private val playerListBG = Label(280, 220, 340, 140, "").apply {
         visual = ColorVisual(255, 255, 255)
@@ -78,14 +78,14 @@ class MainMenuScene(
         visual = buttonRed
     }
 
-    private val playerNames = mutableListOf<String>()
+    private val playerNames = mutableListOf<String>() // No longer used as primary source
 
     init {
         rootService.addRefreshable(this)
         addComponents(
             bg, title, panel,
             nameLabel, nameField, addBtn,
-            playerListBG, player1Label, player2Label, player3Label, player4Label,
+            playerListBG, player1Field, player2Field, player3Field, player4Field,
             roundsLabel, minusBtn, roundsField, plusBtn, roundsSubtitle,
             errorLabel,
             startBtn, quitBtn
@@ -98,24 +98,25 @@ class MainMenuScene(
                 errorLabel.text = "Error: name cannot be blank."
                 return@click
             }
-            if (playerNames.size >= 4) {
-                errorLabel.text = "Error: maximum 4 players allowed."
-                return@click
-            }
-            if (playerNames.contains(name)) {
+            
+            val fields = listOf(player1Field, player2Field, player3Field, player4Field)
+            val firstEmpty = fields.find { it.text.isBlank() }
+            
+            if (fields.any { it.text.trim() == name }) {
                 errorLabel.text = "Error: name already taken."
                 return@click
             }
-            playerNames.add(name)
+            
+            if (firstEmpty == null) {
+                errorLabel.text = "Error: maximum 4 players allowed."
+                return@click
+            }
+            
+            firstEmpty.text = name
             nameField.text = ""
-            updatePlayerList()
         }
 
-        // Clicking labels to remove
-        player1Label.onMouseClicked = { removePlayer(0) }
-        player2Label.onMouseClicked = { removePlayer(1) }
-        player3Label.onMouseClicked = { removePlayer(2) }
-        player4Label.onMouseClicked = { removePlayer(3) }
+        // Backspace functionality is native to TextField
 
         minusBtn.onMouseClicked = {
             val cur = roundsField.text.toIntOrNull() ?: 2
@@ -130,6 +131,11 @@ class MainMenuScene(
         startBtn.onMouseClicked = click@{
             errorLabel.text = ""
             val rounds = roundsField.text.toIntOrNull()
+
+            val playerNames = listOf(player1Field, player2Field, player3Field, player4Field)
+                .map { it.text.trim() }
+                .filter { it.isNotBlank() }
+
             if (playerNames.size < 2) {
                 errorLabel.text = "Error: at least 2 players required."
                 return@click
@@ -142,21 +148,6 @@ class MainMenuScene(
         }
 
         quitBtn.onMouseClicked = { application.exit() }
-    }
-
-    private fun updatePlayerList() {
-        player1Label.text = playerNames.getOrNull(0)?.let { "1. $it (click to remove)" } ?: ""
-        player2Label.text = playerNames.getOrNull(1)?.let { "2. $it (click to remove)" } ?: ""
-        player3Label.text = playerNames.getOrNull(2)?.let { "3. $it (click to remove)" } ?: ""
-        player4Label.text = playerNames.getOrNull(3)?.let { "4. $it (click to remove)" } ?: ""
-    }
-
-    private fun removePlayer(index: Int) {
-        if (index < playerNames.size) {
-            playerNames.removeAt(index)
-            updatePlayerList()
-            errorLabel.text = "Player removed."
-        }
     }
 
     override fun refreshAfterStartNewGame() {
