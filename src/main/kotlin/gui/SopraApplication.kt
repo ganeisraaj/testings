@@ -4,8 +4,7 @@ import service.RootService
 import tools.aqua.bgw.core.BoardGameApplication
 
 /**
- * Main application class for Push Poker.
- * Orchestrates scene switching and holds the RootService.
+ * Main application for the Push Poker game.
  */
 class SopraApplication : BoardGameApplication("Push Poker") {
 
@@ -20,18 +19,22 @@ class SopraApplication : BoardGameApplication("Push Poker") {
         showMainMenu()
     }
 
+    /** Shows the main menu. */
     fun showMainMenu() {
         this.showGameScene(mainMenuScene)
     }
 
+    /** Shows the main game scene. */
     fun showGameScene() {
         this.showGameScene(gameScene)
     }
 
+    /** Shows the handover screen. */
     fun showNextPlayerScene() {
         this.showGameScene(gameNextPlayerScene)
     }
 
+    /** Shows the end screen. */
     fun showGameFinishedScene() {
         this.showGameScene(gameFinishedScene)
     }

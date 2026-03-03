@@ -67,7 +67,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         }
 
         updateLogMessage("New game started with ${gamePlayers.size} players.")
-        onAllRefreshables { it.refreshAfterStartNewGame() }
+        onAllRefreshables { refreshAfterStartNewGame() }
     }
 
     /**
@@ -85,7 +85,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         val finalRanking = currentGame.players.sortedByDescending { it.score.ordinal }
 
         rootService.currentGame = null
-        onAllRefreshables { it.refreshAfterGameEnd(finalRanking) }
+        onAllRefreshables { refreshAfterGameEnd(finalRanking) }
     }
 
     /**
@@ -94,7 +94,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     fun updateLogMessage(message: String) {
         val currentGame = requireGame()
         currentGame.addLog(message)
-        onAllRefreshables { it.refreshLog(message) }
+        onAllRefreshables { refreshLog(message) }
     }
 
     /**
@@ -229,14 +229,14 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         activePlayer.actionsLeft = 2
 
         updateLogMessage("Turn started for ${activePlayer.name}.")
-        onAllRefreshables { it.refreshAfterTurnStart() }
+        onAllRefreshables { refreshAfterTurnStart() }
     }
 
     /**
      * Finishes current turn and goes to startTurn.
      */
     fun endTurn() {
-        onAllRefreshables { it.refreshAfterTurnEnd() }
+        onAllRefreshables { refreshAfterTurnEnd() }
         startTurn()
     }
 }

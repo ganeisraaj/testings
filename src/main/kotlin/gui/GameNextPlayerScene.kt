@@ -11,8 +11,7 @@ import tools.aqua.bgw.util.Font
 import tools.aqua.bgw.visual.ColorVisual
 
 /**
- * Interstitial scene for hotseat mode.
- * Asking the next player to take the device.
+ * Handover screen for switching between players.
  */
 class GameNextPlayerScene(
     private val rootService: RootService,

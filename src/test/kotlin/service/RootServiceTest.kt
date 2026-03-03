@@ -7,26 +7,18 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 /**
- * Test class for [RootService].
- *
- * Covers:
- * - initialization (services exist, currentGame is null)
- * - addRefreshable() registers the refreshable in all services
+ * Tests the central RootService initialization.
  */
 class RootServiceTest {
 
-    /**
-     * Verifies that a newly created [RootService] has no active game.
-     */
+    /** Checks if a new root starts with no game. */
     @Test
     fun testCurrentGameInitiallyNull() {
         val rootService = RootService()
         assertNull(rootService.currentGame)
     }
 
-    /**
-     * Verifies that [RootService] initializes contained services.
-     */
+    /** Checks if sub-services are created. */
     @Test
     fun testServicesAreInitialized() {
         val rootService = RootService()
@@ -34,13 +26,7 @@ class RootServiceTest {
         assertNotNull(rootService.playerActionService)
     }
 
-    /**
-     * Verifies that addRefreshable() registers the same refreshable at all services.
-     *
-     * This is tested indirectly: we register a refreshable that increments a counter
-     * when refreshLog is called, then we trigger refreshLog once through GameService
-     * and once through PlayerActionService.
-     */
+    /** Checks if adding a UI registers it everywhere. */
     @Test
     fun testAddRefreshableRegistersAtAllServices() {
         val rootService = RootService()
@@ -56,9 +42,9 @@ class RootServiceTest {
 
         // Trigger via GameService
         rootService.currentGame = Game()
-        rootService.gameService.updateLog("a")
+        rootService.gameService.updateLogMessage("a")
 
-        // Trigger via PlayerActionService (uses refreshAfterError in our implementation)
+        // Trigger via PlayerActionService
         rootService.playerActionService.onAllRefreshables { refreshLog("b") }
 
         assertEquals(2, spy.logCalls)

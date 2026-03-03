@@ -13,8 +13,7 @@ import tools.aqua.bgw.util.Font
 import tools.aqua.bgw.visual.ColorVisual
 
 /**
- * Main game scene for Push Poker.
- * Layout based on storyboard requirements.
+ * Main game scene where the poker action happens.
  */
 class GameScene(
     private val rootService: RootService

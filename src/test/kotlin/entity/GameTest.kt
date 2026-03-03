@@ -4,23 +4,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Test class for the [Game] entity.
- *
- * This class verifies correct initialization of game state and
- * the behavior of simple data-modifying functions.
+ * Tests for the Game entity.
  */
 class GameTest {
 
-    /**
-     * Verifies that a Game instance is correctly initialized
-     * with provided constructor arguments and default values.
-     *
-     * Expected behavior:
-     * - The total number of rounds is set correctly.
-     * - The current round starts at 1.
-     * - The current player index is initialized to 0.
-     * - The players list contains the provided players.
-     */
+    /** Checks if a game starts with the right info. */
     @Test
     fun testGameCreation() {
         val game = Game(
@@ -34,10 +22,7 @@ class GameTest {
         assertEquals(2, game.players.size)
     }
 
-    /**
-     * Verifies that the addLog() method correctly appends
-     * a message to the game log.
-     */
+    /** Checks if log messages are added correctly. */
     @Test
     fun testAddLog() {
         val game = Game()

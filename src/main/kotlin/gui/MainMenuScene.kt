@@ -13,8 +13,7 @@ import tools.aqua.bgw.visual.ColorVisual
 import tools.aqua.bgw.visual.ImageVisual
 
 /**
- * Main menu scene for Push Poker.
- * Handles player setup and game initialization.
+ * Main menu scene for setting up players and rounds.
  */
 class MainMenuScene(
     private val rootService: RootService,

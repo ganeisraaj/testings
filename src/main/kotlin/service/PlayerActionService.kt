@@ -38,7 +38,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
         rootService.gameService.updateLogMessage("${currentPlayer.name} pushed left and drew a new card.")
         
         // 3. UI Sync
-        onAllRefreshables { it.refreshAfterPushLeft(newlyDrawnCard) }
+        onAllRefreshables { refreshAfterPushLeft(newlyDrawnCard) }
 
         // Step end check
         if (currentPlayer.actionsLeft == 0) {
@@ -73,7 +73,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
         rootService.gameService.updateLogMessage("${currentPlayer.name} pushed right and drew a new card.")
         
         // 3. UI Sync
-        onAllRefreshables { it.refreshAfterPushRight(newlyDrawnCard) }
+        onAllRefreshables { refreshAfterPushRight(newlyDrawnCard) }
 
         // Step end check
         if (currentPlayer.actionsLeft == 0) {
@@ -101,7 +101,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
 
         rootService.gameService.updateLogMessage("${currentPlayer.name} swapped card $openCardIndex with center $centerCardIndex.")
         
-        onAllRefreshables { it.refreshAfterSwitch() }
+        onAllRefreshables { refreshAfterSwitch() }
 
         if (currentPlayer.actionsLeft == 0) {
             rootService.gameService.endTurn()
@@ -126,7 +126,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
 
         rootService.gameService.updateLogMessage("${currentPlayer.name} initiated a full swap.")
         
-        onAllRefreshables { it.refreshAfterSwitch() }
+        onAllRefreshables { refreshAfterSwitch() }
 
         if (currentPlayer.actionsLeft == 0) {
             rootService.gameService.endTurn()
@@ -143,7 +143,7 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
         reduceAction()
         
         rootService.gameService.updateLogMessage("${currentPlayer.name} skipped an action.")
-        onAllRefreshables { it.refreshAfterSwitch() }
+        onAllRefreshables { refreshAfterSwitch() }
 
         if (currentPlayer.actionsLeft == 0) {
             rootService.gameService.endTurn()

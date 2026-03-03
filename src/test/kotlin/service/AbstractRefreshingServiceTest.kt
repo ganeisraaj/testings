@@ -4,33 +4,20 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Test class for [AbstractRefreshingService].
- *
- * Covers:
- * - onAllRefreshables() with empty refreshable list
- * - addRefreshable() + onAllRefreshables() with one registered refreshable
+ * Tests the base service update mechanism.
  */
 class AbstractRefreshingServiceTest {
 
-    /**
-     * Minimal concrete implementation for testing [AbstractRefreshingService].
-     */
     private class DummyService : AbstractRefreshingService()
 
-    /**
-     * Verifies that onAllRefreshables() does not throw when no refreshables are registered.
-     */
+    /** Checks if calling refresh without any UI registered works. */
     @Test
     fun testOnAllRefreshablesWithEmptyListDoesNotThrow() {
         val service = DummyService()
         service.onAllRefreshables { refreshAfterTurnStart() }
-        // no assertion needed: test passes if no exception is thrown
     }
 
-    /**
-     * Verifies that addRefreshable() registers a refreshable and that onAllRefreshables()
-     * executes the provided callback on it.
-     */
+    /** Checks if a registered UI actually gets the update. */
     @Test
     fun testAddRefreshableAndCallbackExecution() {
         val service = DummyService()

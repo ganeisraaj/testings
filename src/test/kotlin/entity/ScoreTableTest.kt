@@ -4,22 +4,11 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * Test class for the [ScoreTable] enum.
- *
- * This class verifies that the defined score categories exist
- * and are correctly accessible via the enum entries.
+ * Tests for the ScoreTable enum.
  */
 class ScoreTableTest {
 
-    /**
-     * Verifies that important score categories are part of the enum,
-     * including the special value NONE.
-     *
-     * Expected behavior:
-     * - The enum contains NONE.
-     * - The enum contains HIGHCARD.
-     * - The enum contains ROYALFLUSH.
-     */
+    /** Checks if key poker hands exist. */
     @Test
     fun testEnumValuesExist() {
         assertTrue(ScoreTable.entries.contains(ScoreTable.NONE))

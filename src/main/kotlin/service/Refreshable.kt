@@ -4,59 +4,34 @@ import entity.Card
 import entity.Player
 
 /**
- * Mechanism for the service layer to notify the view layer (GUI) about state changes.
- *
- * All methods provide default (empty) implementations so that implementing GUI classes
- * only need to override callbacks relevant to them.
- *
- * @see AbstractRefreshingService
+ * Interface for the UI to receive updates from the service layer.
  */
 interface Refreshable {
 
-    /** Called after a new game has been started. */
+    /** Called after a new game starts. */
     fun refreshAfterStartNewGame() {}
 
-    /**
-     * Called after the game ended.
-     *
-     * @param ranking Players ordered by their final placement (highest first).
-     */
+    /** Called after the game ends. */
     fun refreshAfterGameEnd(ranking: List<Player>) {}
 
-    /** Called after a new player's turn starts. */
+    /** Called after a turn starts. */
     fun refreshAfterTurnStart() {}
 
-    /** Called after a player's turn ends. */
+    /** Called after a turn ends. */
     fun refreshAfterTurnEnd() {}
 
-    /** Called after a switch action was executed. */
+    /** Called after a swap action. */
     fun refreshAfterSwitch() {}
 
-    /**
-     * Called after a push left action was executed.
-     *
-     * @param newCard The new card that was pushed into the center.
-     */
+    /** Called after a push left. */
     fun refreshAfterPushLeft(newCard: Card) {}
 
-    /**
-     * Called after a push right action was executed.
-     *
-     * @param newCard The new card that was pushed into the center.
-     */
+    /** Called after a push right. */
     fun refreshAfterPushRight(newCard: Card) {}
 
-    /**
-     * Called when an error occurred in the service layer.
-     *
-     * @param message Human-readable error message.
-     */
+    /** Called when an error occurs. */
     fun refreshAfterError(message: String) {}
 
-    /**
-     * Called when a log entry was added.
-     *
-     * @param message The new log message.
-     */
+    /** Called when a new log entry is added. */
     fun refreshLog(message: String) {}
 }

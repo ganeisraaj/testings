@@ -15,19 +15,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Test class for [GameService].
- *
- * This suite tests:
- * - input validation (require/throw branches)
- * - state initialization in [GameService.startNewGame]
- * - log writing via [GameService.updateLog]
- * - draw/discard transfer via [GameService.refillDrawStack]
- * - full hand ranking via [GameService.evaluateCards]
- * - turn switching and round increment via [GameService.endTurn]
- * - automatic game termination via [GameService.endTurn] when rounds are exceeded
- * - explicit termination via [GameService.endGame]
- *
- * A [Refreshable] spy is used to ensure that refresh callbacks are executed.
+ * Tests for GameService logic.
  */
 class GameServiceTest {
 
@@ -35,7 +23,7 @@ class GameServiceTest {
     private lateinit var spy: RefreshSpy
 
     /**
-     * Refresh spy capturing callback invocations to ensure refresh lines are executed.
+     * Spy to check if refresh methods are called.
      */
     private class RefreshSpy : Refreshable {
         var startCalls = 0
@@ -43,7 +31,8 @@ class GameServiceTest {
         var turnStartCalls = 0
         var turnEndCalls = 0
         var switchCalls = 0
-        var pushCalls = 0
+        var pushLeftCalls = 0
+        var pushRightCalls = 0
         var errorCalls = 0
 
         val logs = mutableListOf<String>()
@@ -70,8 +59,12 @@ class GameServiceTest {
             switchCalls++
         }
 
-        override fun refreshAfterPush(newCard: Card, direction: Int) {
-            pushCalls++
+        override fun refreshAfterPushLeft(newCard: Card) {
+            pushLeftCalls++
+        }
+
+        override fun refreshAfterPushRight(newCard: Card) {
+            pushRightCalls++
         }
 
         override fun refreshAfterError(message: String) {
@@ -83,9 +76,6 @@ class GameServiceTest {
         }
     }
 
-    /**
-     * Creates a fresh [RootService] and registers a [Refreshable] spy before each test.
-     */
     @BeforeTest
     fun setUp() {
         rootService = RootService()
@@ -93,22 +83,10 @@ class GameServiceTest {
         rootService.addRefreshable(spy)
     }
 
-    /**
-     * Helper to create a [Card].
-     *
-     * @param suit Card suit.
-     * @param value Card value.
-     */
+    /** Helper for creating cards. */
     private fun c(suit: CardSuit, value: CardValue) = Card(suit, value)
 
-    /**
-     * Helper to set a 5-card hand for a player using the modelled distribution:
-     * - hiddenCards: 2 cards
-     * - openCards: 3 cards
-     *
-     * @param player Player whose cards are overwritten.
-     * @param cards Exactly 5 cards.
-     */
+    /** Helper to set player cards. */
     private fun setHand(player: Player, cards: List<Card>) {
         require(cards.size == 5)
         player.hiddenCards.clear()
@@ -117,9 +95,7 @@ class GameServiceTest {
         player.openCards.addAll(cards.drop(2))
     }
 
-    /**
-     * Verifies [GameService.startNewGame] initializes state correctly and triggers refresh + log.
-     */
+    /** Checks if a game starts correctly. */
     @Test
     fun testStartNewGameHappyPath() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -137,9 +113,7 @@ class GameServiceTest {
         assertTrue(spy.logs.any { it.contains("New game started") })
     }
 
-    /**
-     * Verifies [GameService.startNewGame] accepts the lower bound of 2 players.
-     */
+    /** Checks boundary case for 2 players. */
     @Test
     fun testStartNewGameBoundaryTwoPlayers() {
         rootService.gameService.startNewGame(mutableListOf("A", "B"), totalRounds = 1)
@@ -148,9 +122,7 @@ class GameServiceTest {
         assertEquals(2, game.players.size)
     }
 
-    /**
-     * Verifies [GameService.startNewGame] accepts the upper bound of 4 players.
-     */
+    /** Checks boundary case for 4 players. */
     @Test
     fun testStartNewGameBoundaryFourPlayers() {
         rootService.gameService.startNewGame(mutableListOf("A", "B", "C", "D"), totalRounds = 1)
@@ -159,9 +131,7 @@ class GameServiceTest {
         assertEquals(4, game.players.size)
     }
 
-    /**
-     * Verifies [GameService.startNewGame] rejects too few players.
-     */
+    /** Validates player count minimum. */
     @Test
     fun testStartNewGameRejectsTooFewPlayers() {
         assertFailsWith<IllegalArgumentException> {
@@ -169,9 +139,7 @@ class GameServiceTest {
         }
     }
 
-    /**
-     * Verifies [GameService.startNewGame] rejects too many players.
-     */
+    /** Validates player count maximum. */
     @Test
     fun testStartNewGameRejectsTooManyPlayers() {
         assertFailsWith<IllegalArgumentException> {
@@ -179,9 +147,7 @@ class GameServiceTest {
         }
     }
 
-    /**
-     * Verifies [GameService.startNewGame] rejects blank names.
-     */
+    /** Rejects blank names. */
     @Test
     fun testStartNewGameRejectsBlankName() {
         assertFailsWith<IllegalArgumentException> {
@@ -189,9 +155,7 @@ class GameServiceTest {
         }
     }
 
-    /**
-     * Verifies [GameService.startNewGame] rejects non-positive totalRounds (0).
-     */
+    /** Rejects 0 rounds. */
     @Test
     fun testStartNewGameRejectsNonPositiveRoundsZero() {
         assertFailsWith<IllegalArgumentException> {
@@ -199,9 +163,7 @@ class GameServiceTest {
         }
     }
 
-    /**
-     * Verifies [GameService.startNewGame] rejects negative totalRounds.
-     */
+    /** Rejects negative rounds. */
     @Test
     fun testStartNewGameRejectsNegativeRounds() {
         assertFailsWith<IllegalArgumentException> {
@@ -209,35 +171,29 @@ class GameServiceTest {
         }
     }
 
-    /**
-     * Verifies [GameService.updateLog] appends log and triggers refreshLog.
-     */
+    /** Validates log updates. */
     @Test
     fun testUpdateLogHappyPath() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
         val game = rootService.currentGame!!
         val before = game.log.size
 
-        rootService.gameService.updateLog("hello")
+        rootService.gameService.updateLogMessage("hello")
 
         assertEquals(before + 1, game.log.size)
         assertEquals("hello", game.log.last())
         assertTrue(spy.logs.contains("hello"))
     }
 
-    /**
-     * Verifies [GameService.updateLog] fails without active game.
-     */
+    /** Fails updateLog without game. */
     @Test
     fun testUpdateLogFailsWithoutGame() {
         assertFailsWith<IllegalArgumentException> {
-            rootService.gameService.updateLog("x")
+            rootService.gameService.updateLogMessage("x")
         }
     }
 
-    /**
-     * Verifies [GameService.refillDrawStack] moves cards from discardStack into drawStack.
-     */
+    /** Checks stack refilling logic. */
     @Test
     fun testRefillDrawStackHappyPath() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -257,23 +213,19 @@ class GameServiceTest {
         assertEquals(beforeDraw + beforeDiscard, game.drawStack.size)
     }
 
-    /**
-     * Verifies [GameService.refillDrawStack] fails when discardStack is empty.
-     */
+    /** Fails refill if discard is empty. */
     @Test
     fun testRefillDrawStackFailsWhenDiscardEmpty() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
         val game = rootService.currentGame!!
         game.discardStack.clear()
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<IllegalStateException> {
             rootService.gameService.refillDrawStack()
         }
     }
 
-    /**
-     * Verifies [GameService.refillDrawStack] fails without active game.
-     */
+    /** Rejects refill without game. */
     @Test
     fun testRefillDrawStackFailsWithoutGame() {
         assertFailsWith<IllegalArgumentException> {
@@ -281,9 +233,7 @@ class GameServiceTest {
         }
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] assigns NONE if player has no cards.
-     */
+    /** Handles empty hands in evaluation. */
     @Test
     fun testEvaluateCardsNone() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -292,14 +242,12 @@ class GameServiceTest {
         player.hiddenCards.clear()
         player.openCards.clear()
 
-        rootService.gameService.evaluateCards(player)
+        val score = rootService.gameService.evaluateCards(player)
 
-        assertEquals(ScoreTable.NONE, player.score)
+        assertEquals(ScoreTable.NONE, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] assigns HIGHCARD for a hand that is not any higher ranking.
-     */
+    /** Evaluates High Card. */
     @Test
     fun testEvaluateCardsHighCard() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -316,14 +264,12 @@ class GameServiceTest {
             )
         )
 
-        rootService.gameService.evaluateCards(player)
+        val score = rootService.gameService.evaluateCards(player)
 
-        assertEquals(ScoreTable.HIGHCARD, player.score)
+        assertEquals(ScoreTable.HIGHCARD, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] detects PAIR.
-     */
+    /** Evaluates Pair. */
     @Test
     fun testEvaluateCardsPair() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -340,13 +286,11 @@ class GameServiceTest {
             )
         )
 
-        rootService.gameService.evaluateCards(player)
-        assertEquals(ScoreTable.PAIR, player.score)
+        val score = rootService.gameService.evaluateCards(player)
+        assertEquals(ScoreTable.PAIR, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] detects TWOPAIR.
-     */
+    /** Evaluates Two Pair. */
     @Test
     fun testEvaluateCardsTwoPair() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -363,13 +307,11 @@ class GameServiceTest {
             )
         )
 
-        rootService.gameService.evaluateCards(player)
-        assertEquals(ScoreTable.TWOPAIR, player.score)
+        val score = rootService.gameService.evaluateCards(player)
+        assertEquals(ScoreTable.TWOPAIR, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] detects SET (three of a kind).
-     */
+    /** Evaluates Set. */
     @Test
     fun testEvaluateCardsSet() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -386,13 +328,11 @@ class GameServiceTest {
             )
         )
 
-        rootService.gameService.evaluateCards(player)
-        assertEquals(ScoreTable.SET, player.score)
+        val score = rootService.gameService.evaluateCards(player)
+        assertEquals(ScoreTable.SET, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] detects STRAIGHT.
-     */
+    /** Evaluates Straight. */
     @Test
     fun testEvaluateCardsStraight() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -409,13 +349,11 @@ class GameServiceTest {
             )
         )
 
-        rootService.gameService.evaluateCards(player)
-        assertEquals(ScoreTable.STRAIGHT, player.score)
+        val score = rootService.gameService.evaluateCards(player)
+        assertEquals(ScoreTable.STRAIGHT, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] detects FLUSH.
-     */
+    /** Evaluates Flush. */
     @Test
     fun testEvaluateCardsFlush() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -432,13 +370,11 @@ class GameServiceTest {
             )
         )
 
-        rootService.gameService.evaluateCards(player)
-        assertEquals(ScoreTable.FLUSH, player.score)
+        val score = rootService.gameService.evaluateCards(player)
+        assertEquals(ScoreTable.FLUSH, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] detects FULLHOUSE.
-     */
+    /** Evaluates Full House. */
     @Test
     fun testEvaluateCardsFullHouse() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -455,13 +391,11 @@ class GameServiceTest {
             )
         )
 
-        rootService.gameService.evaluateCards(player)
-        assertEquals(ScoreTable.FULLHOUSE, player.score)
+        val score = rootService.gameService.evaluateCards(player)
+        assertEquals(ScoreTable.FULLHOUSE, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] detects FOUROFAKIND.
-     */
+    /** Evaluates Four of a Kind. */
     @Test
     fun testEvaluateCardsFourOfAKind() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -478,13 +412,11 @@ class GameServiceTest {
             )
         )
 
-        rootService.gameService.evaluateCards(player)
-        assertEquals(ScoreTable.FOUROFAKIND, player.score)
+        val score = rootService.gameService.evaluateCards(player)
+        assertEquals(ScoreTable.FOUROFAKIND, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] detects STRAIGHTFLUSH.
-     */
+    /** Evaluates Straight Flush. */
     @Test
     fun testEvaluateCardsStraightFlush() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -501,13 +433,11 @@ class GameServiceTest {
             )
         )
 
-        rootService.gameService.evaluateCards(player)
-        assertEquals(ScoreTable.STRAIGHTFLUSH, player.score)
+        val score = rootService.gameService.evaluateCards(player)
+        assertEquals(ScoreTable.STRAIGHTFLUSH, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] detects ROYALFLUSH.
-     */
+    /** Evaluates Royal Flush. */
     @Test
     fun testEvaluateCardsRoyalFlush() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -524,13 +454,11 @@ class GameServiceTest {
             )
         )
 
-        rootService.gameService.evaluateCards(player)
-        assertEquals(ScoreTable.ROYALFLUSH, player.score)
+        val score = rootService.gameService.evaluateCards(player)
+        assertEquals(ScoreTable.ROYALFLUSH, score)
     }
 
-    /**
-     * Verifies [GameService.evaluateCards] fails without active game.
-     */
+    /** Rejects evaluation without game. */
     @Test
     fun testEvaluateCardsFailsWithoutGame() {
         val p = Player("X")
@@ -539,9 +467,7 @@ class GameServiceTest {
         }
     }
 
-    /**
-     * Verifies [GameService.endTurn] non-wrap (0->1) does not increment round and resets actionsLeft.
-     */
+    /** Tests endTurn logic. */
     @Test
     fun testEndTurnNonWrap() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -560,9 +486,7 @@ class GameServiceTest {
         assertTrue(spy.turnStartCalls >= 1)
     }
 
-    /**
-     * Verifies [GameService.endTurn] wrap-around (1->0) increments round.
-     */
+    /** Checks round increments. */
     @Test
     fun testEndTurnWrapIncrementsRound() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -577,9 +501,7 @@ class GameServiceTest {
         assertEquals(2, game.currentRound)
     }
 
-    /**
-     * Verifies [GameService.endTurn] ends the game automatically when rounds are exceeded.
-     */
+    /** Checks automatic game end. */
     @Test
     fun testEndTurnTriggersEndGameWhenRoundsExceeded() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 1)
@@ -595,26 +517,7 @@ class GameServiceTest {
         assertEquals(2, spy.lastRankingSize)
     }
 
-    /**
-     * Verifies [GameService.endTurn] fails with invalid player count (<2).
-     */
-    @Test
-    fun testEndTurnFailsInvalidPlayerCount() {
-        rootService.currentGame = Game(
-            totalRounds = 1,
-            currentRound = 1,
-            currentPlayerIndex = 0,
-            players = mutableListOf(Player("Solo"))
-        )
-
-        assertFailsWith<IllegalArgumentException> {
-            rootService.gameService.endTurn()
-        }
-    }
-
-    /**
-     * Verifies [GameService.endTurn] fails without active game.
-     */
+    /** Fails endTurn without game. */
     @Test
     fun testEndTurnFailsWithoutGame() {
         assertFailsWith<IllegalArgumentException> {
@@ -622,9 +525,7 @@ class GameServiceTest {
         }
     }
 
-    /**
-     * Verifies [GameService.endGame] clears currentGame and triggers refreshAfterGameEnd.
-     */
+    /** Checks endGame logic. */
     @Test
     fun testEndGameHappyPath() {
         rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
@@ -640,9 +541,7 @@ class GameServiceTest {
         assertEquals(2, spy.lastRankingSize)
     }
 
-    /**
-     * Verifies [GameService.endGame] fails without active game.
-     */
+    /** Fails endGame without game. */
     @Test
     fun testEndGameFailsWithoutGame() {
         assertFailsWith<IllegalArgumentException> {

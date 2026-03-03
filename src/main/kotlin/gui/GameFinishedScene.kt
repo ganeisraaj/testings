@@ -12,7 +12,7 @@ import tools.aqua.bgw.util.Font
 import tools.aqua.bgw.visual.ColorVisual
 
 /**
- * Final scene showing the game results and ranking.
+ * Final scene showing the game results and the ranking.
  */
 class GameFinishedScene(
     private val rootService: RootService,

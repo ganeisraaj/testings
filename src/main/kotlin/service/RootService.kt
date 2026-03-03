@@ -3,21 +3,21 @@ package service
 import entity.Game
 
 /**
- * Central access point for the service layer and the current entity state.
+ * Main access point for the service layer.
  */
 class RootService {
 
-    /** The currently active game, or null if no game has been started yet. */
+    /** The current game state. */
     var currentGame: Game? = null
 
-    /** Service responsible for game setup and turn flow. */
+    /** Service for game flow. */
     val gameService: GameService = GameService(this)
 
-    /** Service responsible for player actions during a turn. */
+    /** Service for player moves. */
     val playerActionService: PlayerActionService = PlayerActionService(this)
 
     /**
-     * Registers a [Refreshable] at all services that can trigger UI updates.
+     * Registers a refreshable to all services.
      */
     fun addRefreshable(refreshable: Refreshable) {
         gameService.addRefreshable(refreshable)
