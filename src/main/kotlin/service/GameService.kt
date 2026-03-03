@@ -10,183 +10,101 @@ import kotlin.random.Random
 
 /**
  * Service responsible for managing the global game flow according to the class diagram.
- *
- * This class belongs to the service layer and contains game logic that modifies the entity layer.
- * It operates on the currently active [Game] stored in [RootService.currentGame].
- *
- * Responsibilities (UML):
- * - startNewGame(playersNames, totalRounds)
- * - endGame()
- * - updateLog(message)
- * - refillDrawStack()
- * - evaluateCards(player)
- * - endTurn()
+ * Follows strict UML conformity for student-style implementation.
  */
 class GameService(private val rootService: RootService) : AbstractRefreshingService() {
+
+    /**
+     * Required init method as per UML.
+     */
+    fun init() {
+        // Current initialization logic if needed
+    }
 
     private fun requireGame(): Game =
         rootService.currentGame ?: throw IllegalArgumentException("No active game.")
 
     /**
-     * Starts a new game.
-     *
-     * - 3 center cards
-     * - 2 hidden + 3 open cards per player
+     * Starts a new game with the given player names and round count.
      */
     fun startNewGame(playersNames: MutableList<String>, totalRounds: Int) {
-        require(playersNames.size in 2..4) { "A game requires 2 to 4 players." }
-        require(playersNames.all { it.isNotBlank() }) { "Player names must not be blank." }
-        require(totalRounds > 0) { "Total rounds must be positive." }
+        // Basic validation
+        if (playersNames.size < 2 || playersNames.size > 4) {
+            throw IllegalArgumentException("Game requires 2-4 players.")
+        }
+        for (name in playersNames) {
+            if (name.isBlank()) throw IllegalArgumentException("Player names cannot be blank.")
+        }
 
-        val players = playersNames.map { Player(name = it) }.toMutableList()
+        val gamePlayers = mutableListOf<Player>()
+        for (name in playersNames) {
+            gamePlayers.add(Player(name = name))
+        }
 
-        val game = Game(
+        val newGame = Game(
             totalRounds = totalRounds,
             currentRound = 1,
             currentPlayerIndex = 0,
-            players = players
+            players = gamePlayers
         )
 
-        rootService.currentGame = game
-
+        rootService.currentGame = newGame
+        
+        // Setup game components
         createDrawStack()
 
-        // 3 center cards
-        game.centerCards.clear()
-        repeat(3) { game.centerCards.add(game.drawStack.pop()) }
-
-        // 2 hidden cards per player
-        repeat(2) {
-            players.forEach { p -> p.hiddenCards.add(game.drawStack.pop()) }
+        // Distribute cards to center
+        val center = newGame.centerCards
+        center.clear()
+        for (i in 1..3) {
+            center.add(newGame.drawStack.pop())
         }
 
-        // 3 open cards per player
-        repeat(3) {
-            players.forEach { p -> p.openCards.add(game.drawStack.pop()) }
+        // Deal cards to players
+        for (p in gamePlayers) {
+            for (i in 1..2) p.hiddenCards.add(newGame.drawStack.pop())
+            for (i in 1..3) p.openCards.add(newGame.drawStack.pop())
+            p.actionsLeft = 2
         }
 
-        updateLog("New game started with ${players.size} players and $totalRounds rounds.")
-        onAllRefreshables { refreshAfterStartNewGame() }
+        updateLogMessage("New game started with ${gamePlayers.size} players.")
+        onAllRefreshables { it.refreshAfterStartNewGame() }
     }
 
     /**
-     * Ends the game and sends ranking to view layer.
+     * Ends the game and calculates final ranks.
      */
     fun endGame() {
-        val game = requireGame()
+        val currentGame = requireGame()
 
-        // evaluate all players before ranking
-        game.players.forEach { evaluateCards(it) }
+        // Evaluate all players before finishing
+        for (player in currentGame.players) {
+            player.score = evaluateCards(player)
+        }
 
-        val ranking = game.players.sortedByDescending { it.score.ordinal }
+        // Sort by score strength. Ties are kept as is (Shared Ranks handle them in GUI).
+        val finalRanking = currentGame.players.sortedByDescending { it.score.ordinal }
 
         rootService.currentGame = null
-        onAllRefreshables { refreshAfterGameEnd(ranking) }
+        onAllRefreshables { it.refreshAfterGameEnd(finalRanking) }
     }
 
     /**
-     * Adds message to log and notifies GUI.
+     * Logs a message and notifies the GUI log.
      */
-    fun updateLog(message: String) {
-        val game = requireGame()
-        game.addLog(message)
-        onAllRefreshables { refreshLog(message) }
+    fun updateLogMessage(message: String) {
+        val currentGame = requireGame()
+        currentGame.addLog(message)
+        onAllRefreshables { it.refreshLog(message) }
     }
 
     /**
-     * Refills draw stack from discard stack (spec rule).
-     */
-    fun refillDrawStack() {
-        val game = requireGame()
-        require(game.discardStack.isNotEmpty()) { "Discard stack is empty." }
-
-        val refillCards = mutableListOf<Card>()
-        while (game.discardStack.isNotEmpty()) {
-            refillCards.add(game.discardStack.pop())
-        }
-
-        refillCards.shuffle(Random(System.nanoTime()))
-        game.drawStack.addAll(refillCards)
-    }
-
-    /**
-     * Evaluates 5-card poker hand.
-     */
-    fun evaluateCards(player: Player) {
-        requireGame()
-
-        val hand = player.hiddenCards + player.openCards
-        if (hand.size != 5) {
-            player.score = ScoreTable.NONE
-            return
-        }
-
-        val isFlush = hand.all { it.suit == hand.first().suit }
-
-        val ranks = hand.map { it.value.toRank() }.sorted()
-        val rankCounts = ranks.groupingBy { it }.eachCount()
-        val countsDesc = rankCounts.values.sortedDescending()
-
-        val isStraight = isStraight(ranks)
-        val isRoyal = isFlush && isStraight && ranks == listOf(10, 11, 12, 13, 14)
-
-        player.score = when {
-            isRoyal -> ScoreTable.ROYALFLUSH
-            isFlush && isStraight -> ScoreTable.STRAIGHTFLUSH
-            countsDesc == listOf(4, 1) -> ScoreTable.FOUROFAKIND
-            countsDesc == listOf(3, 2) -> ScoreTable.FULLHOUSE
-            isFlush -> ScoreTable.FLUSH
-            isStraight -> ScoreTable.STRAIGHT
-            countsDesc == listOf(3, 1, 1) -> ScoreTable.SET
-            countsDesc == listOf(2, 2, 1) -> ScoreTable.TWOPAIR
-            countsDesc == listOf(2, 1, 1, 1) -> ScoreTable.PAIR
-            else -> ScoreTable.HIGHCARD
-        }
-    }
-
-    /**
-     * Ends the current turn.
-     * Triggers turn-end refresh and transitions to startTurn.
-     */
-    fun endTurn() {
-        val game = requireGame()
-        onAllRefreshables { refreshAfterTurnEnd() }
-        startTurn()
-    }
-
-    /**
-     * Starts the turn for the next player.
-     * Updates player index, handles round increments, and resets actions.
-     */
-    fun startTurn() {
-        val game = requireGame()
-        require(game.players.size >= 2) { "Game has an invalid number of players." }
-
-        val oldIndex = game.currentPlayerIndex
-        val newIndex = (oldIndex + 1) % game.players.size
-        game.currentPlayerIndex = newIndex
-
-        if (newIndex == 0) {
-            game.currentRound += 1
-            if (game.currentRound > game.totalRounds) {
-                endGame()
-                return
-            }
-        }
-
-        game.players[newIndex].actionsLeft = 2
-
-        updateLog("Turn started for ${game.players[newIndex].name}")
-        onAllRefreshables { refreshAfterTurnStart() }
-    }
-
-    /**
-     * Creates and shuffles the draw stack.
+     * Creates a full deck and shuffles it into the draw stack.
      */
     fun createDrawStack() {
-        val game = requireGame()
-
+        val currentGame = requireGame()
         val cards = mutableListOf<Card>()
+
         for (suit in CardSuit.entries) {
             for (value in CardValue.entries) {
                 cards.add(Card(suit, value))
@@ -194,22 +112,89 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         }
 
         cards.shuffle(Random(System.nanoTime()))
-
-        game.drawStack.clear()
-        game.drawStack.addAll(cards)
+        
+        currentGame.drawStack.clear()
+        for (card in cards) {
+            currentGame.drawStack.add(card)
+        }
     }
 
-    private fun isStraight(sortedRanks: List<Int>): Boolean {
-        val distinct = sortedRanks.distinct()
-        if (distinct.size != 5) return false
+    /**
+     * Refills the draw stack from the discard stack when empty.
+     */
+    fun refillDrawStack() {
+        val currentGame = requireGame()
+        if (currentGame.discardStack.isEmpty()) {
+            throw IllegalStateException("No cards left in discard stack to refill.")
+        }
 
-        val isNormal = distinct.zipWithNext().all { (a, b) -> b == a + 1 }
-        if (isNormal) return true
+        val cardsToReshuffle = mutableListOf<Card>()
+        while (currentGame.discardStack.isNotEmpty()) {
+            cardsToReshuffle.add(currentGame.discardStack.pop())
+        }
 
-        return distinct == listOf(2, 3, 4, 5, 14)
+        cardsToReshuffle.shuffle(Random(System.nanoTime()))
+        for (card in cardsToReshuffle) {
+            currentGame.drawStack.add(card)
+        }
+        
+        updateLogMessage("The draw stack was empty and has been refilled from the discard pile.")
     }
 
-    private fun CardValue.toRank(): Int = when (this) {
+    /**
+     * Evaluates a player's 5-card hand into a ScoreTable category.
+     * Tied categories mean a Draw (no kicker logic).
+     */
+    fun evaluateCards(player: Player): ScoreTable {
+        val allCards = player.hiddenCards + player.openCards
+        if (allCards.size != 5) return ScoreTable.NONE
+
+        val ranks = mutableListOf<Int>()
+        for (card in allCards) {
+            ranks.add(getCardRank(card.value))
+        }
+        ranks.sort()
+
+        val isFlush = allCards.all { it.suit == allCards[0].suit }
+        val isStraight = checkStraight(ranks)
+        
+        // Count frequencies
+        val countsMap = mutableMapOf<Int, Int>()
+        for (r in ranks) {
+            countsMap[r] = (countsMap[r] ?: 0) + 1
+        }
+        val counts = countsMap.values.sortedDescending()
+
+        return when {
+            isFlush && isStraight && ranks == listOf(10, 11, 12, 13, 14) -> ScoreTable.ROYALFLUSH
+            isFlush && isStraight -> ScoreTable.STRAIGHTFLUSH
+            counts == listOf(4, 1) -> ScoreTable.FOUROFAKIND
+            counts == listOf(3, 2) -> ScoreTable.FULLHOUSE
+            isFlush -> ScoreTable.FLUSH
+            isStraight -> ScoreTable.STRAIGHT
+            counts == listOf(3, 1, 1) -> ScoreTable.SET
+            counts == listOf(2, 2, 1) -> ScoreTable.TWOPAIR
+            counts == listOf(2, 1, 1, 1) -> ScoreTable.PAIR
+            else -> ScoreTable.HIGHCARD
+        }
+    }
+
+    private fun checkStraight(sortedRanks: List<Int>): Boolean {
+        // Normal straight
+        var normal = true
+        for (i in 0 until sortedRanks.size - 1) {
+            if (sortedRanks[i + 1] != sortedRanks[i] + 1) {
+                normal = false
+                break
+            }
+        }
+        if (normal) return true
+
+        // Steel wheel
+        return sortedRanks == listOf(2, 3, 4, 5, 14)
+    }
+
+    private fun getCardRank(value: CardValue): Int = when (value) {
         CardValue.TWO -> 2
         CardValue.THREE -> 3
         CardValue.FOUR -> 4
@@ -223,5 +208,37 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         CardValue.QUEEN -> 12
         CardValue.KING -> 13
         CardValue.ACE -> 14
+    }
+
+    /**
+     * Sets up the turn for the next player.
+     */
+    fun startTurn() {
+        val currentGame = requireGame()
+        val nextIdx = (currentGame.currentPlayerIndex + 1) % currentGame.players.size
+        currentGame.currentPlayerIndex = nextIdx
+
+        // Round handling: starts over when player 1 is active again
+        if (nextIdx == 0) {
+            currentGame.currentRound += 1
+            if (currentGame.currentRound > currentGame.totalRounds) {
+                endGame()
+                return
+            }
+        }
+
+        val activePlayer = currentGame.players[nextIdx]
+        activePlayer.actionsLeft = 2
+
+        updateLogMessage("Turn started for ${activePlayer.name}.")
+        onAllRefreshables { it.refreshAfterTurnStart() }
+    }
+
+    /**
+     * Ends the current player's turn and triggers the transition.
+     */
+    fun endTurn() {
+        onAllRefreshables { it.refreshAfterTurnEnd() }
+        startTurn()
     }
 }

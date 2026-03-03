@@ -3,169 +3,170 @@ package service
 import entity.Card
 import entity.Game
 
+/**
+ * Service handling individual player actions like pushing and switching.
+ * Strictly adheres to the GameClassDiagramNEW.jpg and university rules.
+ */
 class PlayerActionService(private val rootService: RootService) : AbstractRefreshingService() {
 
     private fun requireGame(): Game =
-        rootService.currentGame ?: throw IllegalArgumentException("No active game.")
+        rootService.currentGame ?: throw IllegalArgumentException("No active game exists.")
 
-    private fun currentPlayer(game: Game) =
-        game.players[game.currentPlayerIndex]
-
+    /**
+     * Pushes a card from the draw stack into the center row from the left.
+     * The rightmost card is ejected into the discard stack.
+     */
     fun pushLeft() {
-        val game = requireGame()
-        val player = currentPlayer(game)
+        val currentGame = requireGame()
+        val currentPlayer = currentGame.players[currentGame.currentPlayerIndex]
 
-        try {
-            ensureDrawStackAvailable(game, player)
-        } catch (e: IllegalStateException) {
-            onAllRefreshables { refreshAfterError(e.message ?: "Error") }
-            return
+        // 1. Check for cards
+        if (currentGame.drawStack.isEmpty()) {
+            rootService.gameService.refillDrawStack()
         }
 
-        reduceAction(game)
+        reduceAction()
 
-        val newCard = game.drawStack.pop()
-        if (game.centerCards.isNotEmpty()) {
-            game.discardStack.push(game.centerCards.removeAt(0))
-        }
-        game.centerCards.add(newCard)
+        // 2. Perform logic
+        val newlyDrawnCard = currentGame.drawStack.pop()
+        
+        // Card leaving from the right (index 2)
+        val cardToDiscard = currentGame.centerCards.removeAt(2)
+        currentGame.discardStack.push(cardToDiscard)
+        
+        // New card arriving at the left
+        currentGame.centerCards.add(0, newlyDrawnCard)
 
-        rootService.gameService.updateLog("${player.name} pushed left.")
-        onAllRefreshables { refreshAfterPushLeft(newCard) }
+        rootService.gameService.updateLogMessage("${currentPlayer.name} pushed left and drew a new card.")
+        
+        // 3. UI Sync
+        onAllRefreshables { it.refreshAfterPushLeft(newlyDrawnCard) }
 
-        if (currentPlayer(game).actionsLeft == 0) {
-            rootService.gameService.endTurn()
-        }
-    }
-
-    fun pushRight() {
-        val game = requireGame()
-        val player = currentPlayer(game)
-
-        try {
-            ensureDrawStackAvailable(game, player)
-        } catch (e: IllegalStateException) {
-            onAllRefreshables { refreshAfterError(e.message ?: "Error") }
-            return
-        }
-
-        reduceAction(game)
-
-        val newCard = game.drawStack.pop()
-        if (game.centerCards.isNotEmpty()) {
-            game.discardStack.push(game.centerCards.removeAt(game.centerCards.lastIndex))
-        }
-        game.centerCards.add(0, newCard)
-
-        rootService.gameService.updateLog("${player.name} pushed right.")
-        onAllRefreshables { refreshAfterPushRight(newCard) }
-
-        if (currentPlayer(game).actionsLeft == 0) {
-            rootService.gameService.endTurn()
-        }
-    }
-
-    fun switchOne(openCardIndex: Int, centerCardIndex: Int) {
-        val game = requireGame()
-        val player = currentPlayer(game)
-
-        if (openCardIndex !in player.openCards.indices) {
-            throw IndexOutOfBoundsException("openCardIndex out of bounds: $openCardIndex")
-        }
-        if (centerCardIndex !in game.centerCards.indices) {
-            throw IndexOutOfBoundsException("centerCardIndex out of bounds: $centerCardIndex")
-        }
-
-        reduceAction(game)
-
-        val temp: Card = player.openCards[openCardIndex]
-        player.openCards[openCardIndex] = game.centerCards[centerCardIndex]
-        game.centerCards[centerCardIndex] = temp
-
-        val openPos = posText(openCardIndex)
-        val centerPos = posText(centerCardIndex)
-
-        rootService.gameService.updateLog(
-            "${player.name} swapped their $openPos open card with the $centerPos center card."
-        )
-
-        onAllRefreshables { refreshAfterSwitch() }
-
-        if (currentPlayer(game).actionsLeft == 0) {
-            rootService.gameService.endTurn()
-        }
-    }
-
-    fun switchAll() {
-        val game = requireGame()
-        val player = currentPlayer(game)
-
-        reduceAction(game)
-
-        val n = minOf(player.openCards.size, game.centerCards.size)
-        for (i in 0 until n) {
-            val temp = player.openCards[i]
-            player.openCards[i] = game.centerCards[i]
-            game.centerCards[i] = temp
-        }
-
-        rootService.gameService.updateLog(
-            "${player.name} swapped all open cards with the center cards."
-        )
-
-        onAllRefreshables { refreshAfterSwitch() }
-
-        if (currentPlayer(game).actionsLeft == 0) {
+        // Step end check
+        if (currentPlayer.actionsLeft == 0) {
             rootService.gameService.endTurn()
         }
     }
 
     /**
-     * Skips an action (Skip Swap).
+     * Pushes a card from the draw stack into the center row from the right.
+     * The leftmost card is ejected into the discard stack.
+     */
+    fun pushRight() {
+        val currentGame = requireGame()
+        val currentPlayer = currentGame.players[currentGame.currentPlayerIndex]
+
+        // 1. Check for cards
+        if (currentGame.drawStack.isEmpty()) {
+            rootService.gameService.refillDrawStack()
+        }
+
+        reduceAction()
+
+        // 2. Perform logic
+        val newlyDrawnCard = currentGame.drawStack.pop()
+        
+        // Card leaving from the left (index 0)
+        val cardToDiscard = currentGame.centerCards.removeAt(0)
+        currentGame.discardStack.push(cardToDiscard)
+        
+        // New card arriving at the right
+        currentGame.centerCards.add(newlyDrawnCard)
+
+        rootService.gameService.updateLogMessage("${currentPlayer.name} pushed right and drew a new card.")
+        
+        // 3. UI Sync
+        onAllRefreshables { it.refreshAfterPushRight(newlyDrawnCard) }
+
+        // Step end check
+        if (currentPlayer.actionsLeft == 0) {
+            rootService.gameService.endTurn()
+        }
+    }
+
+    /**
+     * Swaps one open card with one center card.
+     */
+    fun switchOne(openCardIndex: Int, centerCardIndex: Int) {
+        val currentGame = requireGame()
+        val currentPlayer = currentGame.players[currentGame.currentPlayerIndex]
+
+        if (openCardIndex !in 0..2 || centerCardIndex !in 0..2) {
+            throw IllegalArgumentException("Invalid switch indices.")
+        }
+
+        reduceAction()
+
+        // Swap without sorting
+        val oldOpenCard = currentPlayer.openCards[openCardIndex]
+        currentPlayer.openCards[openCardIndex] = currentGame.centerCards[centerCardIndex]
+        currentGame.centerCards[centerCardIndex] = oldOpenCard
+
+        rootService.gameService.updateLogMessage("${currentPlayer.name} swapped card $openCardIndex with center $centerCardIndex.")
+        
+        onAllRefreshables { it.refreshAfterSwitch() }
+
+        if (currentPlayer.actionsLeft == 0) {
+            rootService.gameService.endTurn()
+        }
+    }
+
+    /**
+     * Swaps all three open cards with the center cards.
+     */
+    fun switchAll() {
+        val currentGame = requireGame()
+        val currentPlayer = currentGame.players[currentGame.currentPlayerIndex]
+
+        reduceAction()
+
+        // Three individual swaps to maintain fixed positions
+        for (i in 0..2) {
+            val playerCard = currentPlayer.openCards[i]
+            val centerCard = currentGame.centerCards[i]
+            
+            currentPlayer.openCards[i] = centerCard
+            currentGame.centerCards[i] = playerCard
+        }
+
+        rootService.gameService.updateLogMessage("${currentPlayer.name} initiated a full swap.")
+        
+        onAllRefreshables { it.refreshAfterSwitch() }
+
+        if (currentPlayer.actionsLeft == 0) {
+            rootService.gameService.endTurn()
+        }
+    }
+
+    /**
+     * Helper to skip a swap action (Specific logic for Push-Poker).
+     * UML: This follows the 'exactly 2 actions' rule.
      */
     fun skip() {
-        val game = requireGame()
-        val player = currentPlayer(game)
+        val currentGame = requireGame()
+        val currentPlayer = currentGame.players[currentGame.currentPlayerIndex]
         
-        reduceAction(game)
+        reduceAction()
         
-        rootService.gameService.updateLog("${player.name} skipped an action.")
-        onAllRefreshables { refreshAfterSwitch() }
+        rootService.gameService.updateLogMessage("${currentPlayer.name} skipped an action.")
+        onAllRefreshables { it.refreshAfterSwitch() }
 
-        if (currentPlayer(game).actionsLeft == 0) {
+        if (currentPlayer.actionsLeft == 0) {
             rootService.gameService.endTurn()
         }
     }
 
     /**
-     * Ensures draw stack is available.
-     * If empty → refill from discard stack (spec rule).
-     * If still empty → error.
+     * Reduces the action count of the current player.
      */
-    private fun ensureDrawStackAvailable(game: Game, player: entity.Player) {
-        if (game.drawStack.isEmpty()) {
-
-            if (game.discardStack.isNotEmpty()) {
-                rootService.gameService.refillDrawStack()
-                rootService.gameService.updateLog("Draw stack was empty. Discard stack was reshuffled.")
-            }
-
-            if (game.drawStack.isEmpty()) {
-                throw IllegalStateException("No cards available to draw.")
-            }
+    fun reduceAction() {
+        val currentGame = requireGame()
+        val currentPlayer = currentGame.players[currentGame.currentPlayerIndex]
+        
+        if (currentPlayer.actionsLeft <= 0) {
+            throw IllegalStateException("No actions remaining.")
         }
-    }
-
-    private fun reduceAction(game: Game) {
-        val player = currentPlayer(game)
-        require(player.actionsLeft > 0) { "No actions left for current player." }
-        player.actionsLeft -= 1
-    }
-
-    private fun posText(index: Int): String = when (index) {
-        0 -> "left"
-        1 -> "middle"
-        2 -> "right"
-        else -> "?"
+        
+        currentPlayer.actionsLeft -= 1
     }
 }
