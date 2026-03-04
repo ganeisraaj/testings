@@ -18,8 +18,9 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
         val currentGame: Game? = rootService.currentGame
         if (currentGame == null) {
             throw IllegalArgumentException("No active game was found.")
+        } else {
+            return currentGame
         }
-        return currentGame
     }
 
     /**
@@ -27,41 +28,48 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
      * The rightmost card of the middle area is discarded.
      */
     fun pushLeft() {
-        val currentGame: Game = requireGame()
-        val pIndex: Int = currentGame.currentPlayerIndex
-        val currentPlayer: Player = currentGame.players[pIndex]
+        val gameInstance: Game = requireGame()
+        val currentIndex: Int = gameInstance.currentPlayerIndex
+        val activePlayer: Player = gameInstance.players[currentIndex]
 
-        // If the draw stack is empty, we must refill it from the discard pile
-        if (currentGame.drawStack.isEmpty()) {
+        // Check if we need to refill the deck from the discard pile
+        val stackSize: Int = gameInstance.drawStack.size
+        if (stackSize == 0) {
             rootService.gameService.refillDrawStack()
         }
 
-        // We use up one action point
+        // We use up one action point for this move
         reduceAction()
 
-        // Take a new card from the top of the deck
-        val newCard: Card = currentGame.drawStack.pop()
+        // Pull a new card from the draw stack
+        val newlyDrawn: Card = gameInstance.drawStack.pop()
         
-        // Slide the center cards to the right
-        // The card at index 2 (right) goes to the discard pile
-        val cardForDiscard: Card = currentGame.centerCards[2]
-        currentGame.discardStack.push(cardForDiscard)
+        // Grab the center cards list
+        val center: MutableList<Card> = gameInstance.centerCards
         
-        // Manual movement of elements to avoid complex list functions
-        currentGame.centerCards[2] = currentGame.centerCards[1]
-        currentGame.centerCards[1] = currentGame.centerCards[0]
+        // Discard the card that is at the far right (index 2)
+        val discardCard: Card = center[2]
+        gameInstance.discardStack.push(discardCard)
         
-        // Put the new card at index 0 (left)
-        currentGame.centerCards[0] = newCard
+        // Manually move the other two cards to the right
+        val middleCard: Card = center[1]
+        center[2] = middleCard
+        
+        val leftCard: Card = center[0]
+        center[1] = leftCard
+        
+        // Put the freshly drawn card in the left spot (index 0)
+        center[0] = newlyDrawn
 
-        val logMsg: String = currentPlayer.name + " pushed a card in from the left."
-        rootService.gameService.updateLog(logMsg)
+        val logText: String = activePlayer.name + " pushed a card in from the left."
+        rootService.gameService.updateLog(logText)
         
-        // Notification for the user interface
-        onAllRefreshables { refreshAfterPushLeft(newCard) }
+        // Notify the user interface of the change
+        onAllRefreshables { refreshAfterPushLeft(newlyDrawn) }
 
-        // If no actions are left, the turn must end
-        if (currentPlayer.actionsLeft == 0) {
+        // Check if the current player should end their turn
+        val leftActions: Int = activePlayer.actionsLeft
+        if (leftActions == 0) {
             rootService.gameService.endTurn()
         }
     }
@@ -71,41 +79,46 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
      * The leftmost card of the middle area is discarded.
      */
     fun pushRight() {
-        val currentGame: Game = requireGame()
-        val pIndex: Int = currentGame.currentPlayerIndex
-        val currentPlayer: Player = currentGame.players[pIndex]
+        val gameInstance: Game = requireGame()
+        val currentIndex: Int = gameInstance.currentPlayerIndex
+        val activePlayer: Player = gameInstance.players[currentIndex]
 
-        // Check for empty deck
-        if (currentGame.drawStack.isEmpty()) {
+        // Refill the deck if it's empty
+        if (gameInstance.drawStack.isEmpty()) {
             rootService.gameService.refillDrawStack()
         }
 
-        // Subtract action point
+        // Use up one action point
         reduceAction()
 
-        // Get the new card
-        val newCard: Card = currentGame.drawStack.pop()
+        // Take the top card from the deck stack
+        val newlyDrawn: Card = gameInstance.drawStack.pop()
         
-        // Slide the center cards to the left
-        // The card at index 0 (left) goes to the discard pile
-        val cardForDiscard: Card = currentGame.centerCards[0]
-        currentGame.discardStack.push(cardForDiscard)
+        // Get the list of cards in the middle
+        val centerCardsList: MutableList<Card> = gameInstance.centerCards
         
-        // Shift middle and right card to the left
-        currentGame.centerCards[0] = currentGame.centerCards[1]
-        currentGame.centerCards[1] = currentGame.centerCards[2]
+        // Discard the card that is at the far left (index 0)
+        val discardCard: Card = centerCardsList[0]
+        gameInstance.discardStack.push(discardCard)
         
-        // Put the new card at index 2 (right)
-        currentGame.centerCards[2] = newCard
+        // Shift middle and right cards to the left
+        val middleCard: Card = centerCardsList[1]
+        centerCardsList[0] = middleCard
+        
+        val rightCard: Card = centerCardsList[2]
+        centerCardsList[1] = rightCard
+        
+        // Put the drawn card in the right spot (index 2)
+        centerCardsList[2] = newlyDrawn
 
-        val logMsg: String = currentPlayer.name + " pushed a card in from the right."
-        rootService.gameService.updateLog(logMsg)
+        val logText: String = activePlayer.name + " pushed a card in from the right."
+        rootService.gameService.updateLog(logText)
         
-        // Sync with UI
-        onAllRefreshables { refreshAfterPushRight(newCard) }
+        // Synchronize with the UI
+        onAllRefreshables { refreshAfterPushRight(newlyDrawn) }
 
-        // Turn management
-        if (currentPlayer.actionsLeft == 0) {
+        // Determine if turn is over
+        if (activePlayer.actionsLeft == 0) {
             rootService.gameService.endTurn()
         }
     }
@@ -115,32 +128,44 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
      */
     fun switchOne(openCardIndex: Int, centerCardIndex: Int) {
         val currentGame: Game = requireGame()
-        val pIndex: Int = currentGame.currentPlayerIndex
-        val currentPlayer: Player = currentGame.players[pIndex]
+        val activeIdx: Int = currentGame.currentPlayerIndex
+        val playerObj: Player = currentGame.players[activeIdx]
 
-        // Validate that the provided numbers are inside the correct range (0 to 2)
-        if (openCardIndex < 0 || openCardIndex > 2) {
-             throw IllegalArgumentException("The hand index is invalid.")
+        // Validate the indexes using simple if checks
+        if (openCardIndex < 0) {
+             throw IllegalArgumentException("Index too low.")
         }
-        if (centerCardIndex < 0 || centerCardIndex > 2) {
-             throw IllegalArgumentException("The center index is invalid.")
+        if (openCardIndex > 2) {
+             throw IllegalArgumentException("Index too high.")
+        }
+        if (centerCardIndex < 0) {
+             throw IllegalArgumentException("Center index too low.")
+        }
+        if (centerCardIndex > 2) {
+             throw IllegalArgumentException("Center index too high.")
         }
 
+        // Action reduction
         reduceAction()
 
-        // Perform the numerical swap
-        val playerCard: Card = currentPlayer.openCards[openCardIndex]
-        val centerCard: Card = currentGame.centerCards[centerCardIndex]
+        // Perform the swap logic
+        val cardsInHand: MutableList<Card> = playerObj.openCards
+        val cardsInCenter: MutableList<Card> = currentGame.centerCards
 
-        currentPlayer.openCards[openCardIndex] = centerCard
-        currentGame.centerCards[centerCardIndex] = playerCard
+        val cardFromPlayer: Card = cardsInHand[openCardIndex]
+        val cardFromCenter: Card = cardsInCenter[centerCardIndex]
 
-        val logMsg: String = currentPlayer.name + " swapped a card with the center."
-        rootService.gameService.updateLog(logMsg)
+        cardsInHand[openCardIndex] = cardFromCenter
+        cardsInCenter[centerCardIndex] = cardFromPlayer
+
+        val logMsgText: String = playerObj.name + " swapped a card with the middle area."
+        rootService.gameService.updateLog(logMsgText)
         
+        // Refresh the interface
         onAllRefreshables { refreshAfterSwitch() }
 
-        if (currentPlayer.actionsLeft == 0) {
+        // End turn if needed
+        if (playerObj.actionsLeft == 0) {
             rootService.gameService.endTurn()
         }
     }
@@ -149,27 +174,31 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
      * Swaps all three visible player cards with all three center cards.
      */
     fun switchAll() {
-        val currentGame: Game = requireGame()
-        val pIndex: Int = currentGame.currentPlayerIndex
-        val currentPlayer: Player = currentGame.players[pIndex]
+        val gameObj: Game = requireGame()
+        val activeIdx: Int = gameObj.currentPlayerIndex
+        val playerObj: Player = gameObj.players[activeIdx]
 
         reduceAction()
 
-        // Loop through all three positions and swap the contents
+        // Loop 3 times and swap each pair of cards
+        val hand: MutableList<Card> = playerObj.openCards
+        val center: MutableList<Card> = gameObj.centerCards
+        
         for (i in 0 until 3) {
-            val pCard: Card = currentPlayer.openCards[i]
-            val cCard: Card = currentGame.centerCards[i]
+            val pCard: Card = hand[i]
+            val cCard: Card = center[i]
             
-            currentPlayer.openCards[i] = cCard
-            currentGame.centerCards[i] = pCard
+            // Swap values
+            hand[i] = cCard
+            center[i] = pCard
         }
 
-        val logMsg: String = currentPlayer.name + " swapped all cards with the center."
-        rootService.gameService.updateLog(logMsg)
+        val logMsgText: String = playerObj.name + " swapped all cards with the center."
+        rootService.gameService.updateLog(logMsgText)
         
         onAllRefreshables { refreshAfterSwitch() }
 
-        if (currentPlayer.actionsLeft == 0) {
+        if (playerObj.actionsLeft == 0) {
             rootService.gameService.endTurn()
         }
     }
@@ -178,19 +207,19 @@ class PlayerActionService(private val rootService: RootService) : AbstractRefres
      * Checks if the player has actions left and removes one point.
      */
     fun reduceAction() {
-        val currentGame: Game = requireGame()
-        val pIndex: Int = currentGame.currentPlayerIndex
-        val currentPlayer: Player = currentGame.players[pIndex]
+        val gameInstance: Game = requireGame()
+        val currentIdx: Int = gameInstance.currentPlayerIndex
+        val p: Player = gameInstance.players[currentIdx]
         
-        // Make sure we are allowed to take an action
-        if (currentPlayer.actionsLeft <= 0) {
+        // Guard check for actions
+        val currentActions: Int = p.actionsLeft
+        if (currentActions <= 0) {
             throw IllegalStateException("No action points left for this player.")
         }
         
-        // Simple subtraction
-        val oldActions: Int = currentPlayer.actionsLeft
-        val newActions: Int = oldActions - 1
-        currentPlayer.actionsLeft = newActions
+        // Manual subtraction
+        val newVal: Int = currentActions - 1
+        p.actionsLeft = newVal
     }
 
 }

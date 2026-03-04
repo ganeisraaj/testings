@@ -20,6 +20,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
      */
     fun init() {
         // Preparation logic could go here.
+        println("Initializing GameService...")
     }
 
     /**
@@ -29,8 +30,9 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         val currentGame: Game? = rootService.currentGame
         if (currentGame == null) {
             throw IllegalArgumentException("There is no active game.")
+        } else {
+            return currentGame
         }
-        return currentGame
     }
 
     /**
@@ -38,40 +40,44 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
      * It assigns player names, sets the rounds, shuffles the deck, and deals the cards.
      */
     fun startNewGame(playersNames: MutableList<String>, totalRounds: Int) {
-        // Validation of input
-        if (playersNames.size < 2) {
+        // Validation of input - check player count
+        val playerCount: Int = playersNames.size
+        if (playerCount < 2) {
             throw IllegalArgumentException("At least 2 players are needed.")
         }
-        if (playersNames.size > 4) {
+        if (playerCount > 4) {
             throw IllegalArgumentException("Maximum 4 players allowed.")
         }
         
-        for (i in 0 until playersNames.size) {
-            val name: String = playersNames[i]
-            if (name.isBlank()) {
+        // Loop through names to check for blanks
+        for (i in 0 until playerCount) {
+            val nameStr: String = playersNames[i]
+            if (nameStr.isBlank()) {
                 throw IllegalArgumentException("Names cannot be empty.")
             }
         }
         
+        // Check round count
         if (totalRounds < 1) {
             throw IllegalArgumentException("Total rounds must be at least 1.")
         }
 
-        // Creating player objects
+        // Creating player objects one by one
         val gamePlayers: MutableList<Player> = mutableListOf<Player>()
-        for (i in 0 until playersNames.size) {
-            val name: String = playersNames[i]
-            val player: Player = Player(name = name)
-            gamePlayers.add(player)
+        for (i in 0 until playerCount) {
+            val currentName: String = playersNames[i]
+            val newPlayer: Player = Player(name = currentName)
+            gamePlayers.add(newPlayer)
         }
 
-        // Creating the main game state
+        // Creating the main game state object
         val newGame: Game = Game(
             totalRounds = totalRounds,
             currentRound = 1,
             currentPlayerIndex = 0,
             players = gamePlayers
         )
+        // Assign to root service
         rootService.currentGame = newGame
         
         // Shuffle the deck of 52 cards
@@ -81,32 +87,33 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         val middle: MutableList<Card> = newGame.centerCards
         middle.clear()
         for (i in 1..3) {
-            val card: Card = newGame.drawStack.pop()
-            middle.add(card)
+            val drawn: Card = newGame.drawStack.pop()
+            middle.add(drawn)
         }
 
-        // Deal cards to every player
+        // Deal cards to every player in the list
         for (i in 0 until gamePlayers.size) {
-            val p: Player = gamePlayers[i]
-            // Two cards that stay hidden
+            val playerObj: Player = gamePlayers[i]
+            
+            // Give 2 hidden cards to the player
             for (j in 1..2) {
-                val card: Card = newGame.drawStack.pop()
-                p.hiddenCards.add(card)
+                val hiddenCard: Card = newGame.drawStack.pop()
+                playerObj.hiddenCards.add(hiddenCard)
             }
-            // Three cards that are visible
+            // Give 3 open cards to the player
             for (j in 1..3) {
-                val card: Card = newGame.drawStack.pop()
-                p.openCards.add(card)
+                val openCard: Card = newGame.drawStack.pop()
+                playerObj.openCards.add(openCard)
             }
-            // Everyone starts with 2 actions
-            p.actionsLeft = 2
+            // Reset player actions to 2
+            playerObj.actionsLeft = 2
         }
 
-        // Log the start event
-        val logMsg: String = "A new game has started with " + gamePlayers.size + " players."
-        updateLog(logMsg)
+        // Log the event that the game started
+        val msg: String = "A new game has started with " + gamePlayers.size + " players."
+        updateLog(msg)
         
-        // Refresh the visual display
+        // Refresh the visual display for the user
         onAllRefreshables { refreshAfterStartNewGame() }
     }
 
@@ -115,43 +122,50 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
      */
     fun endGame() {
         val currentGame: Game = requireGame()
+        val allPlayers: MutableList<Player> = currentGame.players
 
-        // Evaluate the hand for every single player
-        for (i in 0 until currentGame.players.size) {
-            val p: Player = currentGame.players[i]
+        // Evaluate the hand for every single player in the game
+        for (i in 0 until allPlayers.size) {
+            val p: Player = allPlayers[i]
             evaluateCards(p)
         }
 
-        // Build a list to sort for the scoreboard
-        val ranking: MutableList<Player> = mutableListOf<Player>()
-        for (i in 0 until currentGame.players.size) {
-            ranking.add(currentGame.players[i])
+        // Build a list to sort for the final results scoreboard
+        val rankingList: MutableList<Player> = mutableListOf<Player>()
+        for (i in 0 until allPlayers.size) {
+            val playerToAdd: Player = allPlayers[i]
+            rankingList.add(playerToAdd)
         }
         
-        // Use a simple bubble sort to rank the players by their hand's value
-        for (i in 0 until ranking.size - 1) {
-            for (j in 0 until ranking.size - i - 1) {
-                val score1: Int = ranking[j].score.ordinal
-                val score2: Int = ranking[j + 1].score.ordinal
-                if (score1 < score2) {
-                    val temp: Player = ranking[j]
-                    ranking[j] = ranking[j + 1]
-                    ranking[j + 1] = temp
+        // Use bubble sort to rank the players based on their hand's score value
+        val listSize: Int = rankingList.size
+        for (i in 0 until listSize - 1) {
+            for (j in 0 until listSize - i - 1) {
+                val scoreA: Int = rankingList[j].score.ordinal
+                val scoreB: Int = rankingList[j + 1].score.ordinal
+                if (scoreA < scoreB) {
+                    // Swap players in the list
+                    val temp: Player = rankingList[j]
+                    rankingList[j] = rankingList[j + 1]
+                    rankingList[j + 1] = temp
                 }
             }
         }
 
-        // Reset the current game to end the session
+        // Reset the current game to null to end the session
         rootService.currentGame = null
-        onAllRefreshables { refreshAfterGameEnd(ranking) }
+        // Show the finished scene with the final ranking
+        onAllRefreshables { refreshAfterGameEnd(rankingList) }
     }
 
     /**
      * Adds a text message to the game log and notifies the UI.
      */
     fun updateLog(message: String) {
-        val currentGame: Game = requireGame()
-        currentGame.addLog(message)
+        val activeGame: Game = requireGame()
+        // Save to game state log
+        activeGame.addLog(message)
+        // Update the screen components
         onAllRefreshables { refreshLog(message) }
     }
 
@@ -162,28 +176,30 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
         val currentGame: Game = requireGame()
         val cardList: MutableList<Card> = mutableListOf<Card>()
 
-        // Generate all possible cards
-        val suits: Array<CardSuit> = CardSuit.entries.toTypedArray()
-        val values: Array<CardValue> = CardValue.entries.toTypedArray()
+        // Generate all possible cards by using nested loops
+        val suitTypes: Array<CardSuit> = CardSuit.entries.toTypedArray()
+        val valueTypes: Array<CardValue> = CardValue.entries.toTypedArray()
         
-        for (s in 0 until suits.size) {
-            val currentSuit: CardSuit = suits[s]
-            for (v in 0 until values.size) {
-                val currentValue: CardValue = values[v]
-                val card: Card = Card(currentSuit, currentValue)
-                cardList.add(card)
+        for (s in 0 until suitTypes.size) {
+            val currentSuit: CardSuit = suitTypes[s]
+            for (v in 0 until valueTypes.size) {
+                val currentValue: CardValue = valueTypes[v]
+                val newCard: Card = Card(currentSuit, currentValue)
+                cardList.add(newCard)
             }
         }
 
-        // Randomly mix the card order
-        val seed: Long = System.nanoTime()
-        cardList.shuffle(Random(seed))
+        // Mix the card order randomly using a seed
+        val nanoTime: Long = System.nanoTime()
+        val randomObj: Random = Random(nanoTime)
+        cardList.shuffle(randomObj)
         
-        // Fill the game's draw stack
+        // Fill the game's draw stack after clearing it
         currentGame.drawStack.clear()
-        for (i in 0 until cardList.size) {
-            val card: Card = cardList[i]
-            currentGame.drawStack.add(card)
+        val totalCards: Int = cardList.size
+        for (i in 0 until totalCards) {
+            val cardToPush: Card = cardList[i]
+            currentGame.drawStack.add(cardToPush)
         }
     }
 
@@ -192,22 +208,26 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
      */
     fun refillDrawStack() {
         val currentGame: Game = requireGame()
-        if (currentGame.discardStack.isEmpty()) {
+        val discardSize: Int = currentGame.discardStack.size
+        if (discardSize == 0) {
             throw IllegalStateException("Discard stack is empty. Cannot refill the deck.")
         }
 
-        val temp: MutableList<Card> = mutableListOf<Card>()
+        // Move cards to a list to shuffle them
+        val tempCards: MutableList<Card> = mutableListOf<Card>()
         while (currentGame.discardStack.isNotEmpty()) {
-            val card: Card = currentGame.discardStack.pop()
-            temp.add(card)
+            val cardFromDiscard: Card = currentGame.discardStack.pop()
+            tempCards.add(cardFromDiscard)
         }
 
-        val seed: Long = System.nanoTime()
-        temp.shuffle(Random(seed))
+        // Shuffle the list of cards
+        val seedVal: Long = System.nanoTime()
+        tempCards.shuffle(Random(seedVal))
         
-        for (i in 0 until temp.size) {
-            val card: Card = temp[i]
-            currentGame.drawStack.add(card)
+        // Put the shuffled cards into the draw stack
+        for (i in 0 until tempCards.size) {
+            val cardToPutBack: Card = tempCards[i]
+            currentGame.drawStack.add(cardToPutBack)
         }
         
         updateLog("The deck was refilled from the discard pile.")
@@ -220,33 +240,38 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     fun evaluateCards(player: Player) {
         requireGame()
         
-        // Pick up all 5 cards of the player
-        val hand: MutableList<Card> = mutableListOf<Card>()
-        for (i in 0 until player.hiddenCards.size) {
-            hand.add(player.hiddenCards[i])
+        // Pick up all 5 cards of the player (hidden + open)
+        val fullHand: MutableList<Card> = mutableListOf<Card>()
+        val hiddenList: MutableList<Card> = player.hiddenCards
+        for (i in 0 until hiddenList.size) {
+            fullHand.add(hiddenList[i])
         }
-        for (i in 0 until player.openCards.size) {
-            hand.add(player.openCards[i])
+        val openList: MutableList<Card> = player.openCards
+        for (i in 0 until openList.size) {
+            fullHand.add(openList[i])
         }
         
-        // We must have exactly 5 cards to check
-        if (hand.size != 5) {
+        // We must have exactly 5 cards to check for a poker hand
+        if (fullHand.size != 5) {
             player.score = ScoreTable.NONE
             return
         }
 
-        // Turn card values into numbers (2..14)
+        // Turn card values into rank numbers (2..14)
         val rankNumbers: MutableList<Int> = mutableListOf<Int>()
-        for (i in 0 until hand.size) {
-            val card: Card = hand[i]
-            val value: Int = getCardRank(card.value)
-            rankNumbers.add(value)
+        for (i in 0 until fullHand.size) {
+            val c: Card = fullHand[i]
+            val numericalRank: Int = getCardRank(c.value)
+            rankNumbers.add(numericalRank)
         }
         
-        // Sort the numbers from lowest to highest using bubble sort
-        for (i in 0 until rankNumbers.size - 1) {
-            for (j in 0 until rankNumbers.size - i - 1) {
-                if (rankNumbers[j] > rankNumbers[j + 1]) {
+        // Sort the numbers from lowest to highest using bubble sort logic
+        val n: Int = rankNumbers.size
+        for (i in 0 until n - 1) {
+            for (j in 0 until n - i - 1) {
+                val val1: Int = rankNumbers[j]
+                val val2: Int = rankNumbers[j + 1]
+                if (val1 > val2) {
                     val tempValue: Int = rankNumbers[j]
                     rankNumbers[j] = rankNumbers[j + 1]
                     rankNumbers[j + 1] = tempValue
@@ -254,109 +279,116 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
             }
         }
 
-        // Check for a FLUSH: Do all cards have the same suit?
-        var flushFlag: Boolean = true
-        val suitZero: CardSuit = hand[0].suit
-        for (i in 0 until hand.size) {
-            if (hand[i].suit != suitZero) {
-                flushFlag = false
+        // Check for a FLUSH: Do all 5 cards have the same suit?
+        var isFlush: Boolean = true
+        val suitOfFirst: CardSuit = fullHand[0].suit
+        for (i in 0 until fullHand.size) {
+            val currentSuit: CardSuit = fullHand[i].suit
+            if (currentSuit != suitOfFirst) {
+                isFlush = false
             }
         }
 
-        // Check for a STRAIGHT: Are the cards in numerical order?
-        val straightFlag: Boolean = checkStraight(rankNumbers)
+        // Check for a STRAIGHT: Are the card ranks in consecutive order?
+        val isStraight: Boolean = checkStraight(rankNumbers)
         
-        // Count how many cards exist for each rank (e.g., three Jacks)
+        // Count frequencies of each card rank (e.g., pairs, three of a kind)
         val countStore: MutableMap<Int, Int> = mutableMapOf<Int, Int>()
         for (i in 0 until rankNumbers.size) {
-            val r: Int = rankNumbers[i]
-            val oldVal: Int? = countStore[r]
-            if (oldVal == null) {
-                countStore[r] = 1
+            val rankForCount: Int = rankNumbers[i]
+            val existingCount: Int? = countStore[rankForCount]
+            if (existingCount == null) {
+                countStore[rankForCount] = 1
             } else {
-                countStore[r] = oldVal + 1
+                countStore[rankForCount] = existingCount + 1
             }
         }
         
-        // Collect the counts and sort them descending (e.g. 3, 1, 1)
-        val sortedCounts: MutableList<Int> = mutableListOf<Int>()
-        for (c in countStore.values) {
-            sortedCounts.add(c)
+        // Collect the counts and sort them descending (e.g., 3, 2 for Full House)
+        val collectedCounts: MutableList<Int> = mutableListOf<Int>()
+        for (countValue in countStore.values) {
+            collectedCounts.add(countValue)
         }
-        for (i in 0 until sortedCounts.size - 1) {
-            for (j in 0 until sortedCounts.size - i - 1) {
-                if (sortedCounts[j] < sortedCounts[j + 1]) {
-                    val tempC: Int = sortedCounts[j]
-                    sortedCounts[j] = sortedCounts[j + 1]
-                    sortedCounts[j + 1] = tempC
+        // Bubble sort for counts
+        for (i in 0 until collectedCounts.size - 1) {
+            for (j in 0 until collectedCounts.size - i - 1) {
+                if (collectedCounts[j] < collectedCounts[j + 1]) {
+                    val tempCount: Int = collectedCounts[j]
+                    collectedCounts[j] = collectedCounts[j + 1]
+                    collectedCounts[j + 1] = tempCount
                 }
             }
         }
 
-        // Assign the poker rank based on the found flags and counts
-        var result: ScoreTable = ScoreTable.HIGHCARD
+        // Decide the poker rank enum based on frequencies and flags
+        var finalResult: ScoreTable = ScoreTable.HIGHCARD
 
+        val countInfoSize: Int = collectedCounts.size
         // Four of a kind (4, 1)
-        if (sortedCounts.size == 2 && sortedCounts[0] == 4) {
-            result = ScoreTable.FOUROFAKIND
+        if (countInfoSize == 2 && collectedCounts[0] == 4) {
+            finalResult = ScoreTable.FOUROFAKIND
         }
         // Full house (3, 2)
-        else if (sortedCounts.size == 2 && sortedCounts[0] == 3) {
-            result = ScoreTable.FULLHOUSE
+        else if (countInfoSize == 2 && collectedCounts[0] == 3) {
+            finalResult = ScoreTable.FULLHOUSE
         }
         // Three of a kind (3, 1, 1)
-        else if (sortedCounts.size == 3 && sortedCounts[0] == 3) {
-            result = ScoreTable.SET
+        else if (countInfoSize == 3 && collectedCounts[0] == 3) {
+            finalResult = ScoreTable.SET
         }
         // Two pairs (2, 2, 1)
-        else if (sortedCounts.size == 3 && sortedCounts[0] == 2) {
-            result = ScoreTable.TWOPAIR
+        else if (countInfoSize == 3 && collectedCounts[0] == 2) {
+            finalResult = ScoreTable.TWOPAIR
         }
         // One pair (2, 1, 1, 1)
-        else if (sortedCounts.size == 4 && sortedCounts[0] == 2) {
-            result = ScoreTable.PAIR
+        else if (countInfoSize == 4 && collectedCounts[0] == 2) {
+            finalResult = ScoreTable.PAIR
         }
 
-        // Specials for Straights and Flushes
-        if (straightFlag && flushFlag) {
+        // Special combinations for Straights and Flushes
+        if (isStraight && isFlush) {
             // Check for Royal Flush (10, 11, 12, 13, 14)
             if (rankNumbers[0] == 10 && rankNumbers[4] == 14) {
-                result = ScoreTable.ROYALFLUSH
+                finalResult = ScoreTable.ROYALFLUSH
             } else {
-                result = ScoreTable.STRAIGHTFLUSH
+                finalResult = ScoreTable.STRAIGHTFLUSH
             }
-        } else if (flushFlag) {
-            // If we have a flush but not a straight, and no four/full-house found yet
-            if (result.ordinal < ScoreTable.FLUSH.ordinal) {
-               result = ScoreTable.FLUSH
+        } else if (isFlush) {
+            // Assign flush if no better rank found
+            if (finalResult.ordinal < ScoreTable.FLUSH.ordinal) {
+               finalResult = ScoreTable.FLUSH
             }
-        } else if (straightFlag) {
-            // If we have a straight but not a flush
-            if (result.ordinal < ScoreTable.STRAIGHT.ordinal) {
-                result = ScoreTable.STRAIGHT
+        } else if (isStraight) {
+            // Assign straight if no better rank found
+            if (finalResult.ordinal < ScoreTable.STRAIGHT.ordinal) {
+                finalResult = ScoreTable.STRAIGHT
             }
         }
 
-        player.score = result
+        // Set the score in player object
+        player.score = finalResult
     }
 
     /**
      * Helper to verify if ranks are consecutive.
+     * Handles the special Ace-low straight.
      */
-    private fun checkStraight(sorted: List<Int>): Boolean {
+    private fun checkStraight(sortedRanks: List<Int>): Boolean {
         // Normal check for incremental cards
-        var isNormal: Boolean = true
-        for (i in 0 until sorted.size - 1) {
-            if (sorted[i + 1] != sorted[i] + 1) {
-                isNormal = false
+        var isNormalStraight: Boolean = true
+        for (i in 0 until sortedRanks.size - 1) {
+            val current: Int = sortedRanks[i]
+            val next: Int = sortedRanks[i + 1]
+            if (next != current + 1) {
+                isNormalStraight = false
             }
         }
-        if (isNormal) {
+        if (isNormalStraight) {
             return true
         }
 
-        // Ace-low straight (A, 2, 3, 4, 5) -> In numbers: 2, 3, 4, 5, 14
-        if (sorted[0] == 2 && sorted[1] == 3 && sorted[2] == 4 && sorted[3] == 5 && sorted[4] == 14) {
+        // Ace-low straight (A, 2, 3, 4, 5) -> 2, 3, 4, 5, 14
+        if (sortedRanks[0] == 2 && sortedRanks[1] == 3 && sortedRanks[2] == 4 && sortedRanks[3] == 5 && sortedRanks[4] == 14) {
              return true
         }
         
@@ -364,59 +396,64 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
     }
 
     /**
-     * Translates the value enum into a comparable number.
+     * Translates the value enum into a comparable number (2 to 14).
      */
-    private fun getCardRank(v: CardValue): Int {
-        if (v == CardValue.TWO) return 2
-        if (v == CardValue.THREE) return 3
-        if (v == CardValue.FOUR) return 4
-        if (v == CardValue.FIVE) return 5
-        if (v == CardValue.SIX) return 6
-        if (v == CardValue.SEVEN) return 7
-        if (v == CardValue.EIGHT) return 8
-        if (v == CardValue.NINE) return 9
-        if (v == CardValue.TEN) return 10
-        if (v == CardValue.JACK) return 11
-        if (v == CardValue.QUEEN) return 12
-        if (v == CardValue.KING) return 13
-        if (v == CardValue.ACE) return 14
+    private fun getCardRank(cardValueEnum: CardValue): Int {
+        if (cardValueEnum == CardValue.TWO) return 2
+        if (cardValueEnum == CardValue.THREE) return 3
+        if (cardValueEnum == CardValue.FOUR) return 4
+        if (cardValueEnum == CardValue.FIVE) return 5
+        if (cardValueEnum == CardValue.SIX) return 6
+        if (cardValueEnum == CardValue.SEVEN) return 7
+        if (cardValueEnum == CardValue.EIGHT) return 8
+        if (cardValueEnum == CardValue.NINE) return 9
+        if (cardValueEnum == CardValue.TEN) return 10
+        if (cardValueEnum == CardValue.JACK) return 11
+        if (cardValueEnum == CardValue.QUEEN) return 12
+        if (cardValueEnum == CardValue.KING) return 13
+        if (cardValueEnum == CardValue.ACE) return 14
         return 0
     }
 
     /**
-     * Moves the game focus to the next player. 
-     * Handles round incrementing when full circle reached.
+     * Moves the game focus to the next player in the list. 
+     * Handles round incrementing and checks for game end.
      */
     fun startTurn() {
-        val currentGame: Game = requireGame()
+        val gameInstance: Game = requireGame()
         
-        var nextIdx: Int = currentGame.currentPlayerIndex + 1
-        if (nextIdx >= currentGame.players.size) {
-            nextIdx = 0
-            // Reset to first player means a new round starts
-            currentGame.currentRound = currentGame.currentRound + 1
+        // Calculate the index of the next player
+        var nextPlayerIdx: Int = gameInstance.currentPlayerIndex + 1
+        if (nextPlayerIdx >= gameInstance.players.size) {
+            nextPlayerIdx = 0
+            // Increment logic for rounds
+            val oldRound: Int = gameInstance.currentRound
+            val newRound: Int = oldRound + 1
+            gameInstance.currentRound = newRound
         }
         
-        currentGame.currentPlayerIndex = nextIdx
+        // Update the current player index in game state
+        gameInstance.currentPlayerIndex = nextPlayerIdx
 
-        // Check if the game is over
-        if (currentGame.currentRound > currentGame.totalRounds) {
+        // Check if the total rounds have been exceeded
+        if (gameInstance.currentRound > gameInstance.totalRounds) {
             endGame()
             return
         }
 
-        // Each player gets 2 new actions
-        val p: Player = currentGame.players[nextIdx]
-        p.actionsLeft = 2
+        // Every player gets 2 new actions at turn start
+        val playersList: MutableList<Player> = gameInstance.players
+        val activePlayerObj: Player = playersList[nextPlayerIdx]
+        activePlayerObj.actionsLeft = 2
 
-        val logMsg: String = "It is now the turn of " + p.name + "."
-        updateLog(logMsg)
+        val logMessageText: String = "It is now the turn of " + activePlayerObj.name + "."
+        updateLog(logMessageText)
         
         onAllRefreshables { refreshAfterTurnStart() }
     }
 
     /**
-     * Helper method to trigger the switch of turns.
+     * Helper method to trigger the move to the next player.
      */
     fun endTurn() {
         startTurn()
