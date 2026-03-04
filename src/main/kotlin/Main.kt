@@ -1,10 +1,11 @@
 import gui.SopraApplication
 
 /**
- * Starts the application.
+ * Main entry point that starts the [SopraApplication]
+ *
+ * Once the application is closed, it prints a message indicating the end of the application.
  */
 fun main() {
-    val app: SopraApplication = SopraApplication()
-    app.show()
+    SopraApplication().show()
     println("Application ended. Goodbye")
 }

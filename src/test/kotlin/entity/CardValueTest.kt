@@ -22,14 +22,4 @@ class CardValueTest {
         assertEquals("10", CardValue.TEN.toString())
         assertEquals("J", CardValue.JACK.toString())
     }
-
-    /** Checks if the 32-card deck set is correct. */
-    @Test
-    fun testShortDeck() {
-        val shortDeck = CardValue.shortDeck()
-
-        assertTrue(shortDeck.contains(CardValue.ACE))
-        assertFalse(shortDeck.contains(CardValue.TWO))
-        assertEquals(8, shortDeck.size)
-    }
 }

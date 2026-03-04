@@ -4,34 +4,36 @@ import entity.Card
 import entity.Player
 
 /**
- * Interface for the UI to receive updates from the service layer.
+ * Any class that wants to get updates from the service layer implements this.
+ * All functions have empty default bodies so you only override what you need.
  */
 interface Refreshable {
 
-    /** Called after a new game starts. */
+    // called when a new game is started
     fun refreshAfterStartNewGame() {}
 
-    /** Called after the game ends. */
+    // called when the game is completely over
     fun refreshAfterGameEnd(ranking: List<Player>) {}
 
-    /** Called after a turn starts. */
+    // called at the start of a new turn
     fun refreshAfterTurnStart() {}
 
-    /** Called after a turn ends. */
+    // called when a turn ends
     fun refreshAfterTurnEnd() {}
 
-    /** Called after a swap action. */
+    // called when a card swap happens
     fun refreshAfterSwitch() {}
 
-    /** Called after a push left. */
+    // called when a card is pushed in from the left
     fun refreshAfterPushLeft(newCard: Card) {}
 
-    /** Called after a push right. */
+    // called when a card is pushed in from the right
     fun refreshAfterPushRight(newCard: Card) {}
 
-    /** Called when an error occurs. */
+    // called when something goes wrong
     fun refreshAfterError(message: String) {}
 
-    /** Called when a new log entry is added. */
+    // called when a new message is added to the log
     fun refreshLog(message: String) {}
+
 }

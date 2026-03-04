@@ -1,7 +1,6 @@
 package service
 
 import entity.Card
-import entity.Player
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -177,7 +176,7 @@ class PlayerActionServiceTest {
         }
     }
 
-    /** Rejects moves if no game is setup. */
+    /** Rejects moves if no game is set up. */
     @Test
     fun testFailsWithoutGame() {
         rootService.currentGame = null
@@ -203,5 +202,133 @@ class PlayerActionServiceTest {
         assertEquals((startIndex + 1) % game.players.size, game.currentPlayerIndex)
         assertTrue(spy.turnEndCalls >= 1)
         assertTrue(spy.turnStartCalls >= 1)
+    }
+
+    /** If both stacks are empty, pushing should fail. */
+    @Test
+    fun testPushLeftFailsWhenNoCardsAvailable() {
+        val game = rootService.currentGame!!
+        val player = game.players[game.currentPlayerIndex]
+
+        player.actionsLeft = 2
+        game.drawStack.clear()
+        game.discardStack.clear()
+
+        assertFailsWith<IllegalStateException> {
+            rootService.playerActionService.pushLeft()
+        }
+    }
+
+    /** Same idea as the left push test, but for pushRight. */
+    @Test
+    fun testPushRightReshuffleFromDiscard() {
+        val game = rootService.currentGame!!
+        val player = game.players[game.currentPlayerIndex]
+
+        player.actionsLeft = 2
+
+        // empty the draw stack so refill logic triggers
+        while (game.drawStack.isNotEmpty()) {
+            game.discardStack.push(game.drawStack.pop())
+        }
+
+        rootService.playerActionService.pushRight()
+
+        assertEquals(1, player.actionsLeft)
+        assertEquals(1, spy.pushRightCalls)
+        assertTrue(game.drawStack.isNotEmpty())
+    }
+
+    /** Switching should not work if the player has no actions left. */
+    @Test
+    fun testSwitchFailsWithoutActions() {
+        val game = rootService.currentGame!!
+        val player = game.players[game.currentPlayerIndex]
+
+        player.actionsLeft = 0
+
+        assertFailsWith<IllegalStateException> {
+            rootService.playerActionService.switchOne(0, 0)
+        }
+    }
+
+    /** Push right should fail if no cards exist in draw or discard stacks. */
+    @Test
+    fun testPushRightFailsWhenNoCardsAvailable() {
+        val game = rootService.currentGame!!
+        val player = game.players[game.currentPlayerIndex]
+
+        player.actionsLeft = 2
+        game.drawStack.clear()
+        game.discardStack.clear()
+
+        assertFailsWith<IllegalStateException> {
+            rootService.playerActionService.pushRight()
+        }
+    }
+
+    /** switchAll should fail if the player has no actions left. */
+    @Test
+    fun testSwitchAllFailsWithoutActions() {
+        val game = rootService.currentGame!!
+        val player = game.players[game.currentPlayerIndex]
+
+        player.actionsLeft = 0
+
+        assertFailsWith<IllegalStateException> {
+            rootService.playerActionService.switchAll()
+        }
+    }
+
+    /** switchAll should fail if the player does not have 3 open cards (guard branch). */
+    @Test
+    fun testSwitchAllFailsWhenOpenCardsMissing() {
+        // make sure we start clean for this test
+        rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
+
+        val game = rootService.currentGame!!
+        val player = game.players[game.currentPlayerIndex]
+        player.actionsLeft = 2
+
+        player.openCards.clear()
+
+        assertFailsWith<IllegalArgumentException> {
+            rootService.playerActionService.switchAll()
+        }
+    }
+
+    /** Switching should fail when index is negative. */
+    @Test
+    fun testSwitchOneNegativeIndex() {
+        assertFailsWith<IllegalArgumentException> {
+            rootService.playerActionService.switchOne(-1, 0)
+        }
+    }
+
+    /** switchAll should fail if the center cards are missing. */
+    @Test
+    fun testSwitchAllFailsWhenCenterEmpty() {
+        // make sure we start clean for this test
+        rootService.gameService.startNewGame(mutableListOf("Alice", "Bob"), totalRounds = 3)
+
+        val game = rootService.currentGame!!
+        val player = game.players[game.currentPlayerIndex]
+
+        player.actionsLeft = 2
+        game.centerCards.clear()
+
+        assertFailsWith<IllegalArgumentException> {
+            rootService.playerActionService.switchAll()
+        }
+    }
+
+    /** switchAll should fail if there is no running game. */
+    @Test
+    fun testSwitchAllFailsWithoutGame() {
+        rootService.currentGame = null
+
+        assertFailsWith<IllegalArgumentException> {
+            rootService.playerActionService.switchAll()
+        }
     }
 }
