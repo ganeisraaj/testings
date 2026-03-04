@@ -5,75 +5,88 @@ import entity.CardValue
 import tools.aqua.bgw.visual.ImageVisual
 
 /**
- * Loads card images from the card_deck.png sheet.
- * This class handles finding the correct portion of the image for each card.
+ * The full raster image containing the suits as rows (plus one special row for blank/back)
+ * and values as columns (starting with the ace). As the ordering in the image is not the same
+ * as the order in which the suits are declared in [CardSuit], mappings via [row] and [column]
+ * are required.
+ */
+private const val CARDS_FILE = "card_deck.png"
+
+private const val IMG_HEIGHT = 200
+private const val IMG_WIDTH = 130
+
+/**
+ * Provides access to the src/main/resources/card_deck.png file that contains all card images
+ * in a raster. The returned [ImageVisual] objects of [frontImageFor], [blankImage],
+ * and [backImage] are 130x200 pixels.
  */
 class CardImageLoader {
 
-    private val cardsFile: String = "card_deck.png"
-    private val imgHeight: Int = 200
-    private val imgWidth: Int = 130
-
-    /** Visual representaton of an empty card slot. */
-    val blankImage: ImageVisual = getImageByCoordinates(0, 4)
-
-    /** Visual representation of the back of a card. */
-    val backImage: ImageVisual = getImageByCoordinates(2, 4)
+    /**
+     * Provides a blank (white) card
+     */
+    val blankImage : ImageVisual get() = getImageByCoordinates(0, 4)
 
     /**
-     * Gets the front side image for a specific card.
+     * Provides the back side image of the card deck
      */
-    fun frontImageFor(suit: CardSuit, value: CardValue): ImageVisual {
-        val col: Int = getColumn(value)
-        val row: Int = getRow(suit)
-        val result: ImageVisual = getImageByCoordinates(col, row)
-        return result
-    }
+    val backImage: ImageVisual get() = getImageByCoordinates(2, 4)
 
     /**
-     * Extracts a single card image from the master sheet.
+     * Provides the card image for the given [CardSuit] and [CardValue]
      */
-    private fun getImageByCoordinates(x: Int, y: Int): ImageVisual {
-        val posX: Int = x * imgWidth
-        val posY: Int = y * imgHeight
-        val visual: ImageVisual = ImageVisual(
-            cardsFile,
-            imgWidth,
-            imgHeight,
-            posX,
-            posY
-        )
-        return visual
-    }
+    fun frontImageFor(suit: CardSuit, value: CardValue) =
+        getImageByCoordinates(value.column, suit.row)
 
     /**
-     * Finds the vertical row in the image sheet based on the suit.
+     * retrieves from the full raster image [CARDS_FILE] the corresponding sub-image
+     * for the given column [x] and row [y]
+     *
+     * @param x column in the raster image, starting at 0
+     * @param y row in the raster image, starting at 0
+     *
      */
-    private fun getRow(suit: CardSuit): Int {
-        if (suit == CardSuit.CLUBS) return 0
-        if (suit == CardSuit.DIAMONDS) return 1
-        if (suit == CardSuit.HEARTS) return 2
-        if (suit == CardSuit.SPADES) return 3
-        return 0
-    }
+    private fun getImageByCoordinates (x: Int, y: Int) = ImageVisual(
+        CARDS_FILE,
+        IMG_WIDTH,
+        IMG_HEIGHT,
+        x * IMG_WIDTH,
+        y * IMG_HEIGHT,
+    )
 
-    /**
-     * Finds the horizontal column in the image sheet based on the value.
-     */
-    private fun getColumn(value: CardValue): Int {
-        if (value == CardValue.ACE) return 0
-        if (value == CardValue.TWO) return 1
-        if (value == CardValue.THREE) return 2
-        if (value == CardValue.FOUR) return 3
-        if (value == CardValue.FIVE) return 4
-        if (value == CardValue.SIX) return 5
-        if (value == CardValue.SEVEN) return 6
-        if (value == CardValue.EIGHT) return 7
-        if (value == CardValue.NINE) return 8
-        if (value == CardValue.TEN) return 9
-        if (value == CardValue.JACK) return 10
-        if (value == CardValue.QUEEN) return 11
-        if (value == CardValue.KING) return 12
-        return 0
-    }
+}
+
+/**
+ * As the [CARDS_FILE] does not have the same ordering of suits
+ * as they are in [CardSuit], this extension property provides
+ * a corresponding mapping to be used when addressing the row.
+ *
+ */
+private val CardSuit.row get() = when (this) {
+    CardSuit.CLUBS -> 0
+    CardSuit.DIAMONDS -> 1
+    CardSuit.HEARTS -> 2
+    CardSuit.SPADES -> 3
+}
+
+
+/**
+ * As the [CARDS_FILE] does not have the same ordering of values
+ * as they are in [CardValue], this extension property provides
+ * a corresponding mapping to be used when addressing the column.
+ */
+private val CardValue.column get() = when (this) {
+    CardValue.ACE -> 0
+    CardValue.TWO -> 1
+    CardValue.THREE -> 2
+    CardValue.FOUR -> 3
+    CardValue.FIVE -> 4
+    CardValue.SIX -> 5
+    CardValue.SEVEN -> 6
+    CardValue.EIGHT -> 7
+    CardValue.NINE -> 8
+    CardValue.TEN -> 9
+    CardValue.JACK -> 10
+    CardValue.QUEEN -> 11
+    CardValue.KING -> 12
 }
