@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="3eabbd3c-8b5d-4445-aaf9-c75991759932" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../src/main/kotlin/gui/GameFinishedScene.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../src/main/kotlin/gui/GameNextPlayerScene.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../src/main/kotlin/gui/GameScene.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../src/main/kotlin/gui/MainMenuScene.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../src/main/resources/menu_bg.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../src/main/resources/table_bg.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/main/kotlin/gui/SopraApplication.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../src/main/kotlin/gui/SopraApplication.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/main/kotlin/service/GameService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../src/main/kotlin/service/GameService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/main/kotlin/service/PlayerActionService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../src/main/kotlin/service/PlayerActionService.kt" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="GitLabMergeRequestFiltersHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPENED",
+    "assignee": {
+      "type": "org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.MergeRequestsAssigneeFilterValue",
+      "username": "ganeisraaj.kathiravan",
+      "fullname": "Ganeisraaj Kathiravan"
+    }
+  }
+}]]></component>
+  <component name="GitLabMergeRequestsSettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "first": "https://sopra-gitlab.cs.tu-dortmund.de/sopra26A/einzelprojekte/g05t03.git",
+    "second": "647712e7-dbd7-4eab-94c6-291ab892cfd7"
+  }
+}]]></component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="3ARxWD7I1QSlhmJzjl7UeBWvXxb" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "onboarding.tips.debug.path": "C:/Users/ganei/OneDrive/Desktop/testings/untitled/src/Main.java",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.30387.90" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.30387.90" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3eabbd3c-8b5d-4445-aaf9-c75991759932" name="Changes" comment="" />
+      <created>1772569222515</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1772569222515</updated>
+      <workItem from="1772569223692" duration="16000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/Main.java</url>
+          <line>10</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>
