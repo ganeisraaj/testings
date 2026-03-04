@@ -36,9 +36,9 @@ class GameScene(
         visual = ColorVisual(180, 220, 180)
         font = Font(fontWeight = Font.FontWeight.BOLD)
     }
-    private val currentPlayerLabel = Label(400, 195, 400, 50, "Current Player: -").apply {
+    private val currentPlayerLabel = Label(400, 190, 400, 50, "Current Player: -").apply {
         font = Font(size = 24, fontWeight = Font.FontWeight.BOLD, color = Color(255, 255, 255))
-        visual = ColorVisual(0, 0, 0, 60)
+        visual = ColorVisual(0, 0, 0, 80)
     }
 
     // Log
@@ -56,36 +56,36 @@ class GameScene(
     private fun createPlayerLabel(cx: Int, cy: Int, rot: Double) = Label(posX = cx - 100, posY = cy - 15, width = 200, height = 30, "").apply { font = Font(size = 20, fontWeight = Font.FontWeight.BOLD); rotation = rot; text = "test" }
 
     // Bottom (Player 0 / Current)
-    private val bH1 = createCard(420, 580)
-    private val bH2 = createCard(500, 580)
-    private val bO1 = createCard(600, 580)
-    private val bO2 = createCard(680, 580)
-    private val bO3 = createCard(760, 580)
-    private val bName = createPlayerLabel(630, 550, 0.0)
+    private val bH1 = createCard(420, 560)
+    private val bH2 = createCard(500, 560)
+    private val bO1 = createCard(600, 560)
+    private val bO2 = createCard(680, 560)
+    private val bO3 = createCard(760, 560)
+    private val bName = createPlayerLabel(630, 530, 0.0)
     
-    // Left
-    private val lH1 = createCard(70, 40, 90.0)
-    private val lH2 = createCard(70, 100, 90.0)
-    private val lO1 = createCard(70, 160, 90.0)
-    private val lO2 = createCard(70, 220, 90.0)
-    private val lO3 = createCard(70, 280, 90.0)
-    private val lName = createPlayerLabel(180, 180, 90.0)
+    // Left side players
+    private val lH1 = createCard(70, 70, 90.0)
+    private val lH2 = createCard(70, 160, 90.0)
+    private val lO1 = createCard(70, 250, 90.0)
+    private val lO2 = createCard(70, 340, 90.0)
+    private val lO3 = createCard(70, 430, 90.0)
+    private val lName = createPlayerLabel(185, 250, 90.0)
     
     // Top
-    private val tO1 = createCard(420, 50, 180.0)
-    private val tO2 = createCard(500, 50, 180.0)
-    private val tO3 = createCard(580, 50, 180.0)
-    private val tH1 = createCard(680, 50, 180.0)
-    private val tH2 = createCard(760, 50, 180.0)
-    private val tName = createPlayerLabel(630, 180, 0.0) 
+    private val tO1 = createCard(420, 30, 180.0)
+    private val tO2 = createCard(500, 30, 180.0)
+    private val tO3 = createCard(580, 30, 180.0)
+    private val tH1 = createCard(680, 30, 180.0)
+    private val tH2 = createCard(760, 30, 180.0)
+    private val tName = createPlayerLabel(630, 155, 0.0) 
     
-    // Right
-    private val rO1 = createCard(1055, 40, 270.0)
-    private val rO2 = createCard(1055, 100, 270.0)
-    private val rO3 = createCard(1055, 160, 270.0)
-    private val rH1 = createCard(1055, 220, 270.0)
-    private val rH2 = createCard(1055, 280, 270.0)
-    private val rName = createPlayerLabel(945, 180, 270.0)
+    // Right side players
+    private val rO1 = createCard(1055, 70, 270.0)
+    private val rO2 = createCard(1055, 160, 270.0)
+    private val rO3 = createCard(1055, 250, 270.0)
+    private val rH1 = createCard(1055, 340, 270.0)
+    private val rH2 = createCard(1055, 430, 270.0)
+    private val rName = createPlayerLabel(940, 250, 270.0)
 
     private val allPlayerCards = listOf(
         bH1, bH2, bO1, bO2, bO3, bName,
@@ -94,23 +94,23 @@ class GameScene(
         rO1, rO2, rO3, rH1, rH2, rName
     )
     
-    private val center0 = CardView(posX = 485, posY = 295, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage)
-    private val center1 = CardView(posX = 565, posY = 295, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage)
-    private val center2 = CardView(posX = 645, posY = 295, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage)
-
-    private val drawStackView = CardView(posX = 350, posY = 295, width = 75, height = 110, front = cardImages.backImage, back = cardImages.backImage)
-    private val discardView = CardView(posX = 790, posY = 295, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage)
+    private val center0 = CardView(posX = 485, posY = 310, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage)
+    private val center1 = CardView(posX = 565, posY = 310, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage)
+    private val center2 = CardView(posX = 645, posY = 310, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage)
     
-    private val drawStackLabel = Label(350, 295, 75, 110, "DRAW").apply { 
-        font = Font(size = 14, color = Color.WHITE, fontWeight = Font.FontWeight.BOLD) 
+    private val drawStackView = CardView(posX = 350, posY = 310, width = 75, height = 110, front = cardImages.backImage, back = cardImages.backImage)
+    private val discardView = CardView(posX = 790, posY = 310, width = 75, height = 110, front = cardImages.blankImage, back = cardImages.backImage)
+    
+    private val drawStackLabel = Label(350, 310, 75, 110, "DRAW STACK").apply { 
+        font = Font(size = 12, color = Color.WHITE, fontWeight = Font.FontWeight.BOLD) 
     }
-    private val discardLabel = Label(790, 295, 75, 110, "DISCARD").apply { 
-        font = Font(size = 14, color = Color.WHITE, fontWeight = Font.FontWeight.BOLD) 
+    private val discardLabel = Label(790, 310, 75, 110, "DISCARD STACK").apply { 
+        font = Font(size = 10, color = Color.BLACK, fontWeight = Font.FontWeight.BOLD) 
     }
 
     // Arrows
-    private val leftArrow = Button(435, 330, 40, 40, "<").apply { visual = ColorVisual(255, 150, 0); font = Font(size = 24, fontWeight = Font.FontWeight.BOLD) }
-    private val rightArrow = Button(735, 330, 40, 40, ">").apply { visual = ColorVisual(255, 150, 0); font = Font(size = 24, fontWeight = Font.FontWeight.BOLD) }
+    private val leftArrow = Button(435, 345, 40, 40, "<").apply { visual = ColorVisual(255, 150, 0); font = Font(size = 24, fontWeight = Font.FontWeight.BOLD) }
+    private val rightArrow = Button(735, 345, 40, 40, ">").apply { visual = ColorVisual(255, 150, 0); font = Font(size = 24, fontWeight = Font.FontWeight.BOLD) }
 
     // Controls
     private val switchActionBtn = Button(1000, 480, 160, 40, "Switch").apply { visual = ColorVisual(255, 150, 0) }
@@ -212,15 +212,15 @@ class GameScene(
         val centers = listOf(center0, center1, center2)
         centers.forEachIndexed { i, view ->
             setCard(view, game.centerCards.getOrNull(i))
-            view.posY = if (selectedCenterIdx == i) 275.0 else 295.0
+            view.posY = if (selectedCenterIdx == i) 290.0 else 310.0
         }
 
-        drawStackLabel.text = "DRAW"
-        discardLabel.text = "DISCARD"
+        drawStackLabel.text = "DRAW STACK"
+        discardLabel.text = "DISCARD STACK"
         
-        // Show/Hide discard card based on status
-        discardView.frontVisual = if (game.discardStack.isEmpty()) cardImages.blankImage else cardImages.backImage
-        discardView.showFront()
+        // Show top card of discard stack if possible
+        val topDiscard = if (game.discardStack.isNotEmpty()) game.discardStack.peek() else null
+        setCard(discardView, topDiscard)
 
         // Reset all player cards
         allPlayerCards.forEach { it.isVisible = false }
@@ -255,10 +255,10 @@ class GameScene(
                 val handViews = listOf(o1, o2, o3)
                 handViews.forEachIndexed { idx, v -> 
                     setCard(v, p.openCards.getOrNull(idx))
-                    v.posY = if (selectedOpenIdx == idx) 560.0 else 580.0
+                    v.posY = if (selectedOpenIdx == idx) 540.0 else 560.0
                 }
-                bH1.posY = 580.0
-                bH2.posY = 580.0
+                bH1.posY = 560.0
+                bH2.posY = 560.0
             } else {
                 h1.showBack()
                 h2.showBack()

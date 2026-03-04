@@ -35,6 +35,10 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
             if (name.isBlank()) throw IllegalArgumentException("Player names cannot be blank.")
         }
 
+        if (totalRounds <= 0) {
+            throw IllegalArgumentException("Total rounds must be at least 1.")
+        }
+
         val gamePlayers = mutableListOf<Player>()
         for (name in playersNames) {
             gamePlayers.add(Player(name = name))
@@ -144,6 +148,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
      * Evaluates poker hands. // Categories that are the same are just draws.
      */
     fun evaluateCards(player: Player): ScoreTable {
+        requireGame()
         val allCards = player.hiddenCards + player.openCards
         if (allCards.size != 5) return ScoreTable.NONE
 
@@ -236,7 +241,7 @@ class GameService(private val rootService: RootService) : AbstractRefreshingServ
      * Finishes current turn and goes to startTurn.
      */
     fun endTurn() {
-        onAllRefreshables { refreshAfterTurnEnd() }
         startTurn()
+        onAllRefreshables { refreshAfterTurnEnd() }
     }
 }

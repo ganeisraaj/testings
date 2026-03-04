@@ -74,7 +74,7 @@ class GameNextPlayerScene(
         val game = rootService.currentGame ?: return
         val player = game.players[game.currentPlayerIndex]
         roundField.text = "ROUND: ${game.currentRound}/${game.totalRounds}"
-        actionsField.text = "Actions: 2/2"
+        actionsField.text = "Actions: ${player.actionsLeft}/2"
         infoLabel.text = player.name
     }
 }
