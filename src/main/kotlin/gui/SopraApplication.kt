@@ -8,12 +8,12 @@ import tools.aqua.bgw.core.BoardGameApplication
  */
 class SopraApplication : BoardGameApplication("Push Poker") {
 
-    private val rootService = RootService()
+    private val rootService: RootService = RootService()
 
-    private val mainMenuScene = MainMenuScene(rootService, this)
-    private val gameNextPlayerScene = GameNextPlayerScene(rootService, this)
-    private val gameScene = GameScene(rootService)
-    private val gameFinishedScene = GameFinishedScene(rootService, this)
+    private val mainMenuScene: MainMenuScene = MainMenuScene(rootService, this)
+    private val gameNextPlayerScene: GameNextPlayerScene = GameNextPlayerScene(rootService, this)
+    private val gameScene: GameScene = GameScene(rootService)
+    private val gameFinishedScene: GameFinishedScene = GameFinishedScene(rootService, this)
 
     init {
         showMainMenu()

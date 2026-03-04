@@ -1,12 +1,9 @@
 package entity
 
-import java.util.EnumSet
-
 /**
  * The 13 values of a deck, from 2 to Ace.
  */
 enum class CardValue {
-
     TWO,
     THREE,
     FOUR,
@@ -24,33 +21,20 @@ enum class CardValue {
     /**
      * Shows the card value as a string.
      */
-    override fun toString() =
-        when (this) {
-            TWO -> "2"
-            THREE -> "3"
-            FOUR -> "4"
-            FIVE -> "5"
-            SIX -> "6"
-            SEVEN -> "7"
-            EIGHT -> "8"
-            NINE -> "9"
-            TEN -> "10"
-            JACK -> "J"
-            QUEEN -> "Q"
-            KING -> "K"
-            ACE -> "A"
-        }
-
-    /**
-     * Utility for card values.
-     */
-    companion object {
-
-        /**
-         * The standard 32-card deck starting from 7.
-         */
-        fun shortDeck(): Set<CardValue> {
-            return EnumSet.of(ACE, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING)
-        }
+    override fun toString(): String {
+        if (this == TWO) return "2"
+        if (this == THREE) return "3"
+        if (this == FOUR) return "4"
+        if (this == FIVE) return "5"
+        if (this == SIX) return "6"
+        if (this == SEVEN) return "7"
+        if (this == EIGHT) return "8"
+        if (this == NINE) return "9"
+        if (this == TEN) return "10"
+        if (this == JACK) return "J"
+        if (this == QUEEN) return "Q"
+        if (this == KING) return "K"
+        if (this == ACE) return "A"
+        return ""
     }
 }

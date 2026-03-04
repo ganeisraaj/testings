@@ -4,56 +4,76 @@ import entity.CardSuit
 import entity.CardValue
 import tools.aqua.bgw.visual.ImageVisual
 
-private const val CARDS_FILE = "card_deck.png"
-private const val IMG_HEIGHT = 200
-private const val IMG_WIDTH = 130
-
 /**
- * Loads card images from the card_deck.png file.
+ * Loads card images from the card_deck.png sheet.
+ * This class handles finding the correct portion of the image for each card.
  */
 class CardImageLoader {
 
-    /** Blank card image. */
-    val blankImage : ImageVisual get() = getImageByCoordinates(0, 4)
+    private val cardsFile: String = "card_deck.png"
+    private val imgHeight: Int = 200
+    private val imgWidth: Int = 130
 
-    /** Back side image of a card. */
-    val backImage: ImageVisual get() = getImageByCoordinates(2, 4)
+    /** Visual representaton of an empty card slot. */
+    val blankImage: ImageVisual = getImageByCoordinates(0, 4)
 
-    /** Front image for a specific suit and value. */
-    fun frontImageFor(suit: CardSuit, value: CardValue) =
-        getImageByCoordinates(value.column, suit.row)
+    /** Visual representation of the back of a card. */
+    val backImage: ImageVisual = getImageByCoordinates(2, 4)
 
-    /** Gets an image from the raster by column and row. */
-    private fun getImageByCoordinates (x: Int, y: Int) = ImageVisual(
-        CARDS_FILE,
-        IMG_WIDTH,
-        IMG_HEIGHT,
-        x * IMG_WIDTH,
-        y * IMG_HEIGHT,
-    )
-}
+    /**
+     * Gets the front side image for a specific card.
+     */
+    fun frontImageFor(suit: CardSuit, value: CardValue): ImageVisual {
+        val col: Int = getColumn(value)
+        val row: Int = getRow(suit)
+        val result: ImageVisual = getImageByCoordinates(col, row)
+        return result
+    }
 
-/** Mapping for card suit rows. */
-private val CardSuit.row get() = when (this) {
-    CardSuit.CLUBS -> 0
-    CardSuit.DIAMONDS -> 1
-    CardSuit.HEARTS -> 2
-    CardSuit.SPADES -> 3
-}
+    /**
+     * Extracts a single card image from the master sheet.
+     */
+    private fun getImageByCoordinates(x: Int, y: Int): ImageVisual {
+        val posX: Int = x * imgWidth
+        val posY: Int = y * imgHeight
+        val visual: ImageVisual = ImageVisual(
+            cardsFile,
+            imgWidth,
+            imgHeight,
+            posX,
+            posY
+        )
+        return visual
+    }
 
-/** Mapping for card value columns. */
-private val CardValue.column get() = when (this) {
-    CardValue.ACE -> 0
-    CardValue.TWO -> 1
-    CardValue.THREE -> 2
-    CardValue.FOUR -> 3
-    CardValue.FIVE -> 4
-    CardValue.SIX -> 5
-    CardValue.SEVEN -> 6
-    CardValue.EIGHT -> 7
-    CardValue.NINE -> 8
-    CardValue.TEN -> 9
-    CardValue.JACK -> 10
-    CardValue.QUEEN -> 11
-    CardValue.KING -> 12
+    /**
+     * Finds the vertical row in the image sheet based on the suit.
+     */
+    private fun getRow(suit: CardSuit): Int {
+        if (suit == CardSuit.CLUBS) return 0
+        if (suit == CardSuit.DIAMONDS) return 1
+        if (suit == CardSuit.HEARTS) return 2
+        if (suit == CardSuit.SPADES) return 3
+        return 0
+    }
+
+    /**
+     * Finds the horizontal column in the image sheet based on the value.
+     */
+    private fun getColumn(value: CardValue): Int {
+        if (value == CardValue.ACE) return 0
+        if (value == CardValue.TWO) return 1
+        if (value == CardValue.THREE) return 2
+        if (value == CardValue.FOUR) return 3
+        if (value == CardValue.FIVE) return 4
+        if (value == CardValue.SIX) return 5
+        if (value == CardValue.SEVEN) return 6
+        if (value == CardValue.EIGHT) return 7
+        if (value == CardValue.NINE) return 8
+        if (value == CardValue.TEN) return 9
+        if (value == CardValue.JACK) return 10
+        if (value == CardValue.QUEEN) return 11
+        if (value == CardValue.KING) return 12
+        return 0
+    }
 }

@@ -42,7 +42,7 @@ class RootServiceTest {
 
         // Trigger via GameService
         rootService.currentGame = Game()
-        rootService.gameService.updateLogMessage("a")
+        rootService.gameService.updateLog("a")
 
         // Trigger via PlayerActionService
         rootService.playerActionService.onAllRefreshables { refreshLog("b") }

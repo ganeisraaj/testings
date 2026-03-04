@@ -178,7 +178,7 @@ class GameServiceTest {
         val game = rootService.currentGame!!
         val before = game.log.size
 
-        rootService.gameService.updateLogMessage("hello")
+        rootService.gameService.updateLog("hello")
 
         assertEquals(before + 1, game.log.size)
         assertEquals("hello", game.log.last())
@@ -189,7 +189,7 @@ class GameServiceTest {
     @Test
     fun testUpdateLogFailsWithoutGame() {
         assertFailsWith<IllegalArgumentException> {
-            rootService.gameService.updateLogMessage("x")
+            rootService.gameService.updateLog("x")
         }
     }
 
@@ -242,7 +242,8 @@ class GameServiceTest {
         player.hiddenCards.clear()
         player.openCards.clear()
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
 
         assertEquals(ScoreTable.NONE, score)
     }
@@ -264,7 +265,8 @@ class GameServiceTest {
             )
         )
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
 
         assertEquals(ScoreTable.HIGHCARD, score)
     }
@@ -286,7 +288,8 @@ class GameServiceTest {
             )
         )
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
         assertEquals(ScoreTable.PAIR, score)
     }
 
@@ -307,7 +310,8 @@ class GameServiceTest {
             )
         )
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
         assertEquals(ScoreTable.TWOPAIR, score)
     }
 
@@ -328,7 +332,8 @@ class GameServiceTest {
             )
         )
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
         assertEquals(ScoreTable.SET, score)
     }
 
@@ -349,7 +354,8 @@ class GameServiceTest {
             )
         )
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
         assertEquals(ScoreTable.STRAIGHT, score)
     }
 
@@ -370,7 +376,8 @@ class GameServiceTest {
             )
         )
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
         assertEquals(ScoreTable.FLUSH, score)
     }
 
@@ -391,7 +398,8 @@ class GameServiceTest {
             )
         )
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
         assertEquals(ScoreTable.FULLHOUSE, score)
     }
 
@@ -412,7 +420,8 @@ class GameServiceTest {
             )
         )
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
         assertEquals(ScoreTable.FOUROFAKIND, score)
     }
 
@@ -433,7 +442,8 @@ class GameServiceTest {
             )
         )
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
         assertEquals(ScoreTable.STRAIGHTFLUSH, score)
     }
 
@@ -454,7 +464,8 @@ class GameServiceTest {
             )
         )
 
-        val score = rootService.gameService.evaluateCards(player)
+        rootService.gameService.evaluateCards(player)
+        val score = player.score
         assertEquals(ScoreTable.ROYALFLUSH, score)
     }
 

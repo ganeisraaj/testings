@@ -19,63 +19,92 @@ class GameFinishedScene(
     private val application: BoardGameApplication
 ) : BoardGameScene(1200, 700), Refreshable {
 
-    private val tableGreen = ColorVisual(46, 125, 50)
-    private val overlayVisual = ColorVisual(0, 0, 0, 160)
+    private val tableGreen: ColorVisual = ColorVisual(46, 125, 50)
+    private val overlayVisual: ColorVisual = ColorVisual(0, 0, 0, 160)
 
-    private val bg = Label(0, 0, 1200, 700, "").apply { visual = tableGreen }
-    private val overlay = Label(0, 0, 1200, 700, "").apply { visual = overlayVisual }
+    private val bg: Label = Label(0, 0, 1200, 700, "")
+    private val overlay: Label = Label(0, 0, 1200, 700, "")
 
-    private val panel = Label(300, 150, 600, 400, "").apply {
-        visual = ColorVisual(245, 245, 245)
-    }
+    private val panel: Label = Label(300, 150, 600, 400, "")
 
-    private val title = Label(300, 180, 600, 60, "GAME OVER").apply {
-        font = Font(size = 42, fontWeight = Font.FontWeight.BOLD)
-    }
+    private val title: Label = Label(300, 180, 600, 60, "GAME OVER")
 
-    private val rank1 = Label(300, 250, 600, 40, "").apply { font = Font(size = 24, fontWeight = Font.FontWeight.BOLD) }
-    private val rank2 = Label(300, 300, 600, 40, "").apply { font = Font(size = 22) }
-    private val rank3 = Label(300, 350, 600, 40, "").apply { font = Font(size = 22) }
-    private val rank4 = Label(300, 400, 600, 40, "").apply { font = Font(size = 22) }
+    private val rank1: Label = Label(300, 250, 600, 40, "")
+    private val rank2: Label = Label(300, 300, 600, 40, "")
+    private val rank3: Label = Label(300, 350, 600, 40, "")
+    private val rank4: Label = Label(300, 400, 600, 40, "")
 
-    private val backBtn = Button(500, 480, 200, 50, "Back to Menu").apply {
-        visual = ColorVisual(80, 80, 200)
-        font = Font(size = 18, color = Color(255, 255, 255), fontWeight = Font.FontWeight.BOLD)
-    }
+    private val backBtn: Button = Button(500, 480, 200, 50, "Back to Menu")
 
     init {
         rootService.addRefreshable(this)
+        
+        bg.visual = tableGreen
+        overlay.visual = overlayVisual
+        
+        val panelColor: ColorVisual = ColorVisual(245, 245, 245)
+        panel.visual = panelColor
+        
+        val titleFont: Font = Font(size = 42, fontWeight = Font.FontWeight.BOLD)
+        title.font = titleFont
+
+        val rank1Font: Font = Font(size = 24, fontWeight = Font.FontWeight.BOLD)
+        rank1.font = rank1Font
+        
+        val otherRankFont: Font = Font(size = 22)
+        rank2.font = otherRankFont
+        rank3.font = otherRankFont
+        rank4.font = otherRankFont
+
+        backBtn.visual = ColorVisual(80, 80, 200)
+        backBtn.font = Font(size = 18, color = Color(255, 255, 255), fontWeight = Font.FontWeight.BOLD)
+
         addComponents(bg, overlay, panel, title, rank1, rank2, rank3, rank4, backBtn)
 
-        backBtn.onMouseClicked = click@{
-            (application as SopraApplication).showMainMenu()
-            return@click
+        backBtn.onMouseClicked = {
+            val app: SopraApplication = application as SopraApplication
+            app.showMainMenu()
         }
     }
 
     override fun refreshAfterGameEnd(ranking: List<Player>) {
-        val labels = listOf(rank1, rank2, rank3, rank4)
-        labels.forEach { it.text = "" }
+        val labels: List<Label> = listOf(rank1, rank2, rank3, rank4)
+        
+        // Reset labels
+        for (i in 0 until labels.size) {
+            labels[i].text = ""
+        }
         
         var lastScore: entity.ScoreTable? = null
-        var lastRank = 1
+        var lastRank: Int = 1
         
-        ranking.withIndex().forEach { (i, p) ->
+        for (i in 0 until ranking.size) {
             if (i < labels.size) {
-                if (p.score != lastScore) {
+                val player: Player = ranking[i]
+                
+                if (player.score != lastScore) {
                     lastRank = i + 1
-                    lastScore = p.score
+                    lastScore = player.score
                 }
                 
-                val pos = when(lastRank) {
-                    1 -> "1st Place"
-                    2 -> "2nd Place"
-                    3 -> "3rd Place"
-                    else -> "${lastRank}th Place"
+                var positionText: String = ""
+                if (lastRank == 1) {
+                    positionText = "1st Place"
+                } else if (lastRank == 2) {
+                    positionText = "2nd Place"
+                } else if (lastRank == 3) {
+                    positionText = "3rd Place"
+                } else {
+                    positionText = lastRank.toString() + "th Place"
                 }
-                labels[i].text = "$pos: ${p.name.uppercase()} (${p.score})"
+                
+                val playerName: String = player.name.uppercase()
+                val playerScore: String = player.score.toString()
+                labels[i].text = positionText + ": " + playerName + " (" + playerScore + ")"
             }
         }
-        (application as SopraApplication).showGameFinishedScene()
+        
+        val app: SopraApplication = application as SopraApplication
+        app.showGameFinishedScene()
     }
 }

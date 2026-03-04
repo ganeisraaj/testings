@@ -13,10 +13,11 @@ enum class CardSuit {
     /**
      * Shows the suit as a symbol.
      */
-    override fun toString() = when (this) {
-        CLUBS -> "♣"
-        SPADES -> "♠"
-        HEARTS -> "♥"
-        DIAMONDS -> "♦"
+    override fun toString(): String {
+        if (this == CLUBS) return "♣"
+        if (this == SPADES) return "♠"
+        if (this == HEARTS) return "♥"
+        if (this == DIAMONDS) return "♦"
+        return ""
     }
 }
